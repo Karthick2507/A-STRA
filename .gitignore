@@ -1,31 +1,66 @@
-# Dependencies
-node_modules/
-
-# Environment — NEVER push this (contains passwords)
-.env
-
-# Generated test files — regenerated on each run
-tests/generated/
-
-# Reports — generated output
-reports/
-
-# Logs
-logs/
-*.log
-
-# TypeScript compiled output
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# pytest
+.pytest_cache/
+pytest_cache/
 
 # Playwright
 test-results/
 playwright-report/
 
-# OS files
+# Logs
+logs/
+*.log
+
+# Reports
+reports/
+
+# Generated tests
+tests/generated/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
 Thumbs.db
 
-# IDE
-.idea/
-.vscode/
-*.swp
+# Node (legacy - being replaced by Python)
+node_modules/
+dist/
+*.js
+*.d.ts
+*.js.map
