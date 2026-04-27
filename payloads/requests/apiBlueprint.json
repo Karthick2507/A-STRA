@@ -1,0 +1,26 @@
+[
+  {
+    "method": "GET",
+    "url": "https://mrm.stg.freewheel.tv/",
+    "path": "/",
+    "requestSchema": {},
+    "responseSchema": {},
+    "requiredFields": [],
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer {{BEARER_TOKEN}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "https://mrm.stg.freewheel.tv/app/543761/advertising/agencies/create/",
+    "path": "/app/543761/advertising/agencies/create/",
+    "requestSchema": {},
+    "responseSchema": {},
+    "requiredFields": [],
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer {{BEARER_TOKEN}}"
+    }
+  }
+]

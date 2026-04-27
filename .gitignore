@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Environment — NEVER push this (contains passwords)
+.env
+
+# Generated test files — regenerated on each run
+tests/generated/
+
+# Reports — generated output
+reports/
+
+# Logs
+logs/
+*.log
+
+# TypeScript compiled output
+dist/
+
+# Playwright
+test-results/
+playwright-report/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
