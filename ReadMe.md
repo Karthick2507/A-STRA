@@ -1,358 +1,289 @@
-npm run preflight        # Health check + auto schema
-npm run test:ui          # UI tests
-npm run test:api         # API tests
-npm run full:run         # Everything end to end
-npx playwright test tests/generated/ui/*.spec.ts --ui 
-PWDEBUG=1 npm run test:ui
+# ASTRA — Autonomous A\* Search Based Test & Reporting Architecture
 
+> **Python Edition** — fully rewritten from TypeScript to Python
 
-Welcome to ASTRA! 🌟
-Hey, welcome to the team! Don't worry — we'll go through everything step by step. By the end of this, you'll understand exactly what this project does and how it works.
+---
 
-**1) What is this Project About?**
-The Problem We're Solving
-Imagine you join a company and your job is to test a website — say, a user registration form. Normally, as a QA engineer, you would have to:
+## What is ASTRA?
 
-Manually look at every field on the form
-Write test cases one by one
-Manually type test data for each field
-Run the tests and check if they pass
+ASTRA is a self-driving test automation framework that uses the **A\* (A-Star) pathfinding algorithm** to determine the optimal order in which to fill form fields and call API endpoints. It:
 
-This takes days or weeks for a large application. And every time the app changes, you have to redo it all.
+- Runs a **preflight health check** (DOM scan, bearer-token extraction, network intercept, anti-bot detection)
+- Builds a **FieldSchema** from those findings
+- Feeds the schema into the **A\* engine** which ranks fields by `f(n) = g(n) + h(n)`
+- Passes the ranked field list to **code generators** that write `pytest` test files
+- Executes those tests and produces **HTML + JSON reports**
 
-What ASTRA Does Instead
-ASTRA is a framework that does all of that automatically.
-You give ASTRA just two things:
-1. The URL of your web app
-2. A valid username and password to log in
-ASTRA then does everything else on its own:
-Step 1 → Visits your app and studies every field on the page
-Step 2 → Captures every API call the app makes in the background
-Step 3 → Uses an AI algorithm to figure out how to fill the form
-Step 4 → Generates and writes the actual test code files
-Step 5 → Runs those tests and gives you a report
+---
 
-A Simple Analogy
-Think of ASTRA like a very smart new hire on your QA team:
-Human QA EngineerASTRALooks at the form manuallyScans the DOM automaticallyWrites test data manuallyGenerates test data algorithmicallyWrites test scripts by handGenerates Playwright .ts filesRuns tests manuallyExecutes tests automaticallyTypes up a reportGenerates HTML + JSON reports
-The key difference: ASTRA does it in minutes, not days.
+## Tech Stack (Python)
 
-What Makes ASTRA Unique — The A* Algorithm
-The name ASTRA comes from the A* (pronounced "A-star") algorithm — a famous pathfinding algorithm used in GPS navigation and video games.
-In GPS, A* finds the shortest route from point A to point B avoiding roads that are blocked.
-In ASTRA, A* finds the optimal path through a form — which fields to fill, in what order, using what data — to reach the goal (a successful form submission).
-GPS World          →    ASTRA World
-────────────────────────────────────
-Map                →    Web Form
-Roads              →    Form Fields
-Blocked Roads      →    Invalid/Missing Fields
-Destination        →    Successful Submission
-Shortest Route     →    Optimal Fill Sequence
+| Concern | TypeScript (old) | Python (new) |
+|---|---|---|
+| Test runner | `@playwright/test` | `pytest` + `pytest-playwright` |
+| Browser automation | Playwright TS | `playwright` (Python) |
+| HTTP client | `axios` | `httpx` |
+| Env config | `dotenv` | `python-dotenv` |
+| Logging | `winston` | `logging` + `colorlog` |
+| Priority queue (A\*) | Custom `PriorityQueue` | `heapq` |
+| Type contracts | TypeScript interfaces | `@dataclass` + `TypedDict` |
+| Entry point | `package.json` scripts | `python main.py <cmd>` |
+| Config file | `playwright.config.ts` | `conftest.py` + `pytest.ini` |
+| Dependencies | `package.json` | `requirements.txt` |
 
-What ASTRA Tests
-ASTRA covers three types of testing:
-1. UI Testing — filling forms in a real browser
-2. API Testing — sending HTTP requests directly (GET, POST, PUT, PATCH, DELETE)
-3. E2E Testing — running both UI and API together as one full flow
+---
 
-The Name
-ASTRA =      Autonomous A* Search Based Test & Reporting Architecture
-Each word matters:
+## Installation
 
-Autonomous → runs itself, no manual intervention
-A* Search → uses the A* algorithm to find optimal paths
-Test → it's a testing framework
-Reporting → generates structured reports automatically
-Architecture → it's a full system, not just a script
+```bash
+# 1. Clone
+git clone https://github.com/karthick2507/a-stra.git
+cd a-stra
 
+# 2. Create virtual environment
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 
-Summary
+# 3. Install dependencies
+pip install -r requirements.txt
 
-ASTRA is an autonomous test framework. You give it a URL and credentials. It studies your app, writes tests using an AI search algorithm, runs those tests, and delivers a full report — all without you writing a single line of test code.
+# 4. Install Playwright browsers
+playwright install chromium
 
-ASTRA's Big Picture — 5 Layers
+# 5. Configure environment
+cp .env.example .env
+# Edit .env with your target app URLs and credentials
+```
 
-┌─────────────────────────────────────────────────────────────┐
-│                    YOU (The User)                           │
-│              npm run preflight / test:ui / full:run         │
-└─────────────────────────────┬───────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│  LAYER 1 — PREFLIGHT LAYER  (The Inspector)                 │
-│  "Study the app before testing"                             │
-│                                                             │
-│  domAnalyser.ts          → Scans every field on the page    │
-│  bearerTokenAnalyser.ts  → Finds & saves auth token         │
-│  networkInterceptor.ts   → Captures all API calls           │
-│  antiBotAnalyser.ts      → Detects CAPTCHA / WAF / bots     │
-│  healthCheck.orchestrator.ts → Runs all 4, generates report │
-└─────────────────────────────┬───────────────────────────────┘
-                              │ outputs findings
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│  LAYER 2 — CORE LAYER  (The Brain)                          │
-│  "Figure out what to test and how"                          │
-│                                                             │
-│  schemaBuilder.ts     → Converts findings → field schema    │
-│  heuristicScorer.ts   → Calculates g(n), h(n), f(n) scores  │
-│  dataGenerator.ts     → Creates valid + invalid test data   │
-│  aStarEngine.ts       → Finds optimal path through fields   │
-└─────────────────────────────┬───────────────────────────────┘
-                              │ outputs A* path + data
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│  LAYER 3 — CODEGEN LAYER  (The Writer)                      │
-│  "Write the actual test scripts"                            │
-│                                                             │
-│  uiCodeGenerator.ts  → Writes Playwright UI test files      │
-│  apiCodeGenerator.ts → Writes Playwright API test files     │
-└─────────────────────────────┬───────────────────────────────┘
-                              │ outputs .spec.ts files
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│  LAYER 4 — RUNNER LAYER  (The Executor)                     │
-│  "Run the generated tests"                                  │
-│                                                             │
-│  uiTestRunner.ts   → Runs UI tests via Playwright CLI       │
-│  apiTestRunner.ts  → Runs API tests via Playwright CLI      │
-│  e2eTestRunner.ts  → Orchestrates all runners together      │
-└─────────────────────────────┬───────────────────────────────┘
-                              │ outputs test results
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│  LAYER 5 — SUPPORT LAYER  (The Foundation)                  │
-│  "Utilities that every layer depends on"                    │
-│                                                             │
-│  envLoader.ts       → Reads .env configuration              │
-│  logger.ts          → Logs everything to console + file     │
-│  reportGenerator.ts → Builds HTML + JSON reports            │
-│  schemaResolver.ts  → Safely loads schema files             │
-└─────────────────────────────────────────────────────────────┘
+---
 
-The Folder Structure Explained
+## Environment Configuration (`.env`)
 
-Astra/
-│
-├── .env                    ← Your app's URL, credentials, settings
-├── package.json            ← Project dependencies + npm scripts
-├── tsconfig.json           ← TypeScript configuration
-├── playwright.config.ts    ← Playwright browser settings
-│
-├── preflight/              ← LAYER 1: Inspector
-│   ├── domAnalyser.ts
-│   ├── bearerTokenAnalyser.ts
-│   ├── networkInterceptorAnalyser.ts
-│   ├── antiBotAnalyser.ts
-│   └── healthCheck.orchestrator.ts
-│
-├── core/                   ← LAYER 2: Brain
-│   ├── schemaBuilder.ts
-│   ├── scorer/
-│   │   └── heuristicScorer.ts
+```ini
+# Required
+BASE_URL=https://your-app.com
+LOGIN_URL=https://your-app.com/login
+TARGET_PAGE_URL=https://your-app.com/register
+APP_USERNAME=your_username
+APP_PASSWORD=your_password
+
+# Auto-populated by preflight
+BEARER_TOKEN=
+
+# Controls
+HEALTH_CHECK=true        # Run preflight before tests
+BROWSER=chromium         # chromium | firefox | webkit
+HEADLESS=false           # true for CI
+SLOW_MO=0                # ms delay between actions
+```
+
+---
+
+## Running ASTRA
+
+```bash
+# Run full preflight health check only
+python main.py preflight
+
+# Run UI test pipeline (preflight → schema → A* → codegen → pytest)
+python main.py ui
+python main.py ui --skip-preflight
+python main.py ui --skip-schema-gen
+
+# Run API test pipeline
+python main.py api
+python main.py api --skip-preflight
+
+# Run full E2E pipeline (all 5 phases)
+python main.py e2e
+python main.py e2e --skip-preflight --skip-ui
+
+# Run tests directly with pytest
+pytest tests/ui -v --headed
+pytest tests/api -v
+pytest tests/ -v -m "positive"
+pytest tests/ -v -m "negative"
+```
+
+---
+
+## Project Structure
+
+```
+a-stra/
+├── main.py                        # CLI entry point
+├── conftest.py                    # pytest fixtures + browser config
+├── pytest.ini                     # test discovery + markers
+├── requirements.txt               # Python dependencies
+├── .env.example                   # Environment template
+├── schemas/
+│   ├── field_schema.py            # Core dataclasses (FieldSchema, Section, Field …)
+│   ├── api/
+│   │   ├── registration_schema.py # Manual API schema
+│   │   └── autoGeneratedSchema.json
+│   └── ui/
+│       ├── registration_schema.py # Manual UI schema
+│       └── autoGeneratedSchema.json
+├── utils/
+│   ├── env_loader.py              # .env loader + validation
+│   ├── logger.py                  # Colour-coded logger (replaces Winston)
+│   ├── report_generator.py        # HTML + JSON preflight reports
+│   ├── schema_reconciler.py       # Live DOM sync (self-healing)
+│   └── schema_resolver.py         # Priority-based schema loader
+├── core/
+│   ├── schema_builder.py          # Preflight → FieldSchema
 │   ├── generator/
-│   │   └── dataGenerator.ts
+│   │   └── data_generator.py      # Valid/invalid test-data per field type
+│   ├── scorer/
+│   │   └── heuristic_scorer.py    # g(n), h(n), f(n) computation
 │   └── search/
-│       └── aStarEngine.ts
-│
-├── codegen/                ← LAYER 3: Writer
-│   ├── uiCodeGenerator.ts
-│   └── apiCodeGenerator.ts
-│
-├── runners/                ← LAYER 4: Executor
-│   ├── ui/uiTestRunner.ts
-│   ├── api/apiTestRunner.ts
-│   └── e2e/e2eTestRunner.ts
-│
-├── utils/                  ← LAYER 5: Foundation
-│   ├── envLoader.ts
-│   ├── logger.ts
-│   ├── reportGenerator.ts
-│   └── schemaResolver.ts
-│
-├── schemas/                ← Schema definitions (the "map" of your form)
-│   ├── fieldSchema.interface.ts
-│   ├── ui/registrationSchema.ts
-│   └── api/registrationSchema.ts
-│
-├── reports/                ← Generated reports (auto-created)
-│   ├── preflight/
-│   └── testResults/
-│
-└── tests/                  ← Generated test files (auto-created)
-    └── generated/
-        ├── ui/
-        └── api/       
-
-
-The Technology Stac
-1. TypeScript
-
-What it is: A programming language. An upgraded version of JavaScript.
-Why not plain JavaScript?
-JavaScript (loose):           TypeScript (strict):
-────────────────────────────────────────────────────
-let name = 42;               let name: string = "Karthick";
-name = "hello"; // ✅ ok     name = 42; // ❌ Error caught!
-// Bug found only at runtime  // Bug caught before running
-TypeScript adds types — it tells the computer "this variable must always be a string" — and catches mistakes before you even run the code.
-
-2. Playwright
-What it is: A tool that controls a real web browser from code.
-
-3. Node.js
-What it is: Lets you run TypeScript/JavaScript on your computer (outside the browser).
-Without Node.js, JavaScript only runs inside browsers. Node.js lets ASTRA run as a command-line tool on your terminal.
-
-4. ts-node
-What it is: Runs TypeScript files directly without compiling first.
-Normally: TypeScript → compile → JavaScript → run
-With ts-node: TypeScript → run directly ✅
-
-5. fs-extra
-What it is: A utility to read and write files.
-
-// In code — reads from .env automatically
-console.log(process.env.BASE_URL); // "https://myapp.com"
+│       └── a_star_engine.py       # A* search using heapq
+├── preflight/
+│   ├── dom_analyser.py            # Playwright DOM field scanner
+│   ├── bearer_token_analyser.py   # Network intercept for Bearer tokens
+│   ├── network_interceptor_analyser.py  # XHR/Fetch capture + API blueprint
+│   ├── anti_bot_analyser.py       # CAPTCHA/WAF/Cloudflare detection
+│   └── health_check_orchestrator.py     # Master preflight coordinator
+├── codegen/
+│   ├── api_code_generator.py      # Generates pytest API test files
+│   └── ui_code_generator.py       # Generates pytest UI test files
+├── runners/
+│   ├── api/api_test_runner.py     # API pipeline orchestrator
+│   ├── ui/ui_test_runner.py       # UI pipeline orchestrator
+│   └── e2e/e2e_test_runner.py     # Full 5-phase E2E pipeline
+├── tests/
+│   ├── ui/                        # Generated + manual UI tests
+│   ├── api/                       # Generated API tests
+│   └── delete/                    # Delete lifecycle tests
+└── payloads/
+    └── requests/apiBlueprint.json  # Captured API blueprint
 ```
 
 ---
 
-## The A\* Algorithm — Visual Explanation
+## A\* Algorithm — How It Works
 
-This is the core concept. Let's visualise it:
 ```
-FORM FIELDS (the maze):
+For each unfilled field, compute:
 
-  [firstName] ──→ [lastName] ──→ [email] ──→ [phone]
-                                    │
-                                    ▼
-                              [street] ──→ [city] ──→ [state]
-                                                         │
-                                                         ▼
-                                                    [username]
-                                                         │
-                                                         ▼
-                                                    [password]
-                                                         │
-                                                         ▼
-                                                   🎯 GOAL (Submit)
+  f(n) = g(n) + w × h(n)
 
-A* finds this path automatically using:
-  g(n) = how many fields filled so far (cost paid)
-  h(n) = how many mandatory fields still left (cost ahead)
-  f(n) = g(n) + h(n)  ← always pick the lowest f next
+  g(n) = cost so far
+         +1 base cost per field
+         +2 if dependency not yet filled
+         +3 if field previously failed
+
+  h(n) = remaining required fields
+         - priority_bonus (high-priority fields get lower h)
+
+  w    = heuristic_weight (default 1.0, configured per schema)
+
+Fields with lowest f(n) are filled first.
+Goal = all required fields are in the filled set.
 ```
 
 ---
 
-## How Everything Connects — One Sentence Each
+## 5-Layer Architecture
 
-| File | One-Line Role |
-|------|--------------|
-| `.env` | Stores your app's URL and credentials |
-| `envLoader.ts` | Reads `.env` and validates all settings |
-| `healthCheck.orchestrator.ts` | Master controller that runs all 4 inspectors |
-| `domAnalyser.ts` | Opens browser, reads every field on the form |
-| `bearerTokenAnalyser.ts` | Extracts and saves the auth token |
-| `networkInterceptorAnalyser.ts` | Records every API call the page makes |
-| `antiBotAnalyser.ts` | Checks if the app has CAPTCHA or bot protection |
-| `schemaBuilder.ts` | Converts inspector findings into a field map |
-| `heuristicScorer.ts` | Calculates priority scores for each field |
-| `dataGenerator.ts` | Creates test data (valid and invalid) for each field |
-| `aStarEngine.ts` | Runs A\* search to find optimal fill order |
-| `uiCodeGenerator.ts` | Writes Playwright UI test `.ts` files |
-| `apiCodeGenerator.ts` | Writes Playwright API test `.ts` files |
-| `uiTestRunner.ts` | Runs generated UI tests |
-| `apiTestRunner.ts` | Runs generated API tests |
-| `e2eTestRunner.ts` | Runs everything end-to-end |
-| `reportGenerator.ts` | Builds HTML + JSON reports |
-| `schemaResolver.ts` | Safely loads the right schema file |
+```
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  Layer 1 │ PREFLIGHT                                  ┃
+┃           │ DOM │ Bearer │ Network │ AntiBot           ┃
+┠──────────────────────────────────────────────────┨
+┃  Layer 2 │ CORE (A* Engine)                           ┃
+┃           │ SchemaBuilder │ DataGenerator │ A*Search  ┃
+┠──────────────────────────────────────────────────┨
+┃  Layer 3 │ CODEGEN                                    ┃
+┃           │ ApiCodeGenerator │ UiCodeGenerator         ┃
+┠──────────────────────────────────────────────────┨
+┃  Layer 4 │ RUNNERS                                    ┃
+┃           │ UiTestRunner │ ApiTestRunner │ E2ERunner  ┃
+┠──────────────────────────────────────────────────┨
+┃  Layer 5 │ SUPPORT UTILS                              ┃
+┃           │ EnvLoader │ Logger │ Reports │ Reconciler ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+```
 
 ---
 
-## The Complete Flow in One Diagram
+## Preflight Analysers
+
+| Analyser | File | Purpose |
+|---|---|---|
+| DOM Analyser | `preflight/dom_analyser.py` | 9-step Playwright DOM scan: login → navigate → interact → screenshot → scroll → extract fields |
+| Bearer Token | `preflight/bearer_token_analyser.py` | 3-layer token extraction: response body → headers → localStorage. Validates against `/me`, `/profile` |
+| Network Interceptor | `preflight/network_interceptor_analyser.py` | Captures XHR/Fetch, infers API schema, saves `apiBlueprint.json` |
+| Anti-Bot | `preflight/anti_bot_analyser.py` | 7 checks: CAPTCHA, Cloudflare, WAF, rate-limit, honeypot, bot-scripts, headless detection. Threat levels: NONE/LOW/MEDIUM/HIGH |
+
+---
+
+## Schema System
+
+```python
+FieldSchema
+  └─ sections: List[Section]
+       └─ fields: List[Field]
+            ├─ name, type, selector, required, priority
+            ├─ validation_rules: List[ValidationRule]
+            ├─ data_hints: DataHints
+            └─ children: List[ChildField]   # conditional fields
 ```
-You type: npm run full:run
-              │
-              ▼
-        ┌─────────────┐
-        │  .env file  │ ← BASE_URL, credentials, settings
-        └──────┬──────┘
-               │
-               ▼
-    ┌──────────────────────┐
-    │  Preflight (4 checks)│
-    │  DOM + Token +       │
-    │  Network + AntiBot   │
-    └──────────┬───────────┘
-               │ findings
-               ▼
-    ┌──────────────────────┐
-    │   Schema Builder     │ ← Converts findings to field map
-    └──────────┬───────────┘
-               │ schema
-               ▼
-    ┌──────────────────────┐
-    │   A* Engine          │ ← Finds optimal field fill path
-    │   + DataGenerator    │ ← Generates test data
-    └──────────┬───────────┘
-               │ path + values
-               ▼
-    ┌──────────────────────┐
-    │   Code Generators    │ ← Writes .spec.ts test files
-    │   UI + API           │
-    └──────────┬───────────┘
-               │ spec files
-               ▼
-    ┌──────────────────────┐
-    │   Runners            │ ← Executes tests via Playwright
-    │   UI + API + E2E     │
-    └──────────┬───────────┘
-               │ results
-               ▼
-    ┌──────────────────────┐
-    │   Reports            │ ← HTML + JSON reports saved
-    └──────────────────────┘
 
-3) Every File — Purpose, Code & Explanation
+Schema priority (resolver):
+1. `autoGeneratedSchema.json` (from preflight DOM/network scan)
+2. Manual Python schema (`schemas/ui/registration_schema.py`)
 
-LAYER 5 FIRST — Foundation Files
-(We start here because every other layer depends on these)
+---
 
-📄 File 1: .env
-What is it?
-Think of it as the settings panel of ASTRA. No code here — just key=value pairs.
-Why does it exist?
-Instead of hardcoding your app's URL inside the code (which is bad — you'd have to change 10 files every time URL changes), you put it in one place: .env.
+## Self-Healing (SchemaReconciler)
 
-📄 File 2: utils/envLoader.ts
-What is it?
-The gatekeeper — reads .env, validates it, and gives the rest of the code a clean typed object to use.
-Why does it exist?
-Without this, every file would have to call process.env.BASE_URL directly — messy, no validation, no defaults. envLoader does it once and does it right.
+Before each UI run, `schema_reconciler.py` scans the live DOM and:
+- **Adds** fields found in DOM but missing from schema
+- **Removes** fields in schema no longer in DOM
+- **Updates** type/required changes
 
-📄 File 3: utils/logger.ts
-What is it?
-The diary of ASTRA — records everything that happens, with timestamps, colours, and categories.
-Why does it exist?
-When something goes wrong at 3am in a CI pipeline, you need to know exactly what happened and when. The logger keeps a permanent record.
+This keeps tests passing even when the UI changes.
 
-📄 File 4: utils/reportGenerator.ts
-What is it?
-The report card writer — takes results from all 4 preflight analysers and creates a beautiful HTML report.
+---
 
-📄 File 5: utils/schemaResolver.ts
-What is it?
-The safe schema loader — finds and loads the right schema file without crashing.
-Why does it exist?
-This was added to fix a real bug: when autoGeneratedSchema.json didn't exist yet, the code was accidentally trying to read a TypeScript .ts file as JSON — which crashes.
+## Generated Test Files
 
+| Type | Location | Files |
+|---|---|---|
+| UI positive | `tests/ui/` | `test_registration_positive.py` |
+| UI negative | `tests/ui/` | `test_registration_negative.py` |
+| UI full | `tests/ui/` | `test_registration_full.py` |
+| API POST | `tests/api/` | `test_post.py` |
+| API PUT | `tests/api/` | `test_put.py` |
+| API PATCH | `tests/api/` | `test_patch.py` |
+| API GET | `tests/api/` | `test_get.py` |
+| API DELETE | `tests/api/` | `test_delete.py` |
+| API CRUD | `tests/api/` | `test_crud.py` |
+| Delete lifecycle | `tests/delete/` | `test_delete_positive.py`, `test_delete_negative.py`, `test_delete_full.py` |
 
-LAYER 1 — Preflight Files
+---
 
-📄 File 6: schemas/fieldSchema.interface.ts
-What is it?
-The blueprint of a blueprint — defines the exact shape that every schema must follow.
-Why does it exist?
-TypeScript interfaces are contracts. By defining FieldSchema, we guarantee that the UI schema, API schema, auto-generated schema, and everything in the core layer all speak the same language.
+## Reports
+
+After each run, reports are saved to `reports/`:
+- `preflight_<run_id>.html` — dark-themed preflight summary
+- `preflight_<run_id>.json` — machine-readable results
+- `testResults/` — pytest HTML report
+- `testResults/trace.zip` — Playwright trace (open with `playwright show-trace`)
+- `testResults/FAIL_*.png` — screenshots of failed tests
+
+---
+
+## Contributing
+
+1. Fork the repo
+2. Create a feature branch
+3. Write tests in `tests/`
+4. Open a pull request
+
+---
+
+## License
+
+MIT
