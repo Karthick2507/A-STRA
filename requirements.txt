@@ -1,10 +1,18 @@
 # ASTRA Framework - Python Dependencies
+
+# Browser automation + test runner
 playwright>=1.40.0
 pytest>=7.4.0
 pytest-playwright>=0.4.3
 pytest-asyncio>=0.21.0
+
+# Environment & config
 python-dotenv>=1.0.0
+
+# Logging
 colorlog>=6.7.0
+
+# HTTP client (replaces axios)
 httpx>=0.25.0
-uuid>=1.30
-pathlib2>=2.3.7
+
+# NOTE: uuid and pathlib are Python 3 standard library — no install needed
