@@ -1,0 +1,81 @@
+{
+  "_comment": "Non-secret defaults. Secrets live in .env. Override via --env=staging|prod|dev.",
+
+  "framework": {
+    "name": "ASTRA-v2",
+    "version": "2.0.0"
+  },
+
+  "browser": {
+    "default": "chromium",
+    "supported": ["chromium", "firefox", "webkit"],
+    "headless": false,
+    "slow_mo_ms": 0,
+    "viewport": { "width": 1280, "height": 720 },
+    "ignore_https_errors": true
+  },
+
+  "timeouts": {
+    "action_ms": 15000,
+    "navigation_ms": 30000,
+    "expect_ms": 10000,
+    "astar_goal_ms": 60000
+  },
+
+  "retry": {
+    "max_attempts": 3,
+    "backoff_seconds": [2, 4, 8]
+  },
+
+  "self_healing": {
+    "enabled": true,
+    "auto_apply_silent": true,
+    "min_confidence": 0.75,
+    "registry_path": "Data/locators/locator_registry.db",
+    "model_path": "Asearch/self_healing/ml/models/healer_model.onnx",
+    "sklearn_model_path": "Asearch/self_healing/ml/models/healer_model.pkl"
+  },
+
+  "astar": {
+    "max_iterations": 500,
+    "heuristic_weight": 1.0,
+    "allow_optional_fields": false,
+    "success_text_patterns": [
+      "submitted successfully",
+      "saved successfully",
+      "success",
+      "submitted",
+      "saved",
+      "created",
+      "thank you"
+    ]
+  },
+
+  "shadow_coding": {
+    "session_dir": "Asearch/shadow_coding/sessions",
+    "auto_assertions": true,
+    "assertion_checkpoints": ["page_load", "click", "navigation", "popup_visible"]
+  },
+
+  "reporting": {
+    "tool": "allure",
+    "results_dir": "reports/allure-results",
+    "attach_screenshots_on_failure": true,
+    "attach_traces_on_failure": true,
+    "attach_videos_on_failure": false
+  },
+
+  "notifications": {
+    "enabled": true,
+    "send_on": "every_run",
+    "channels": ["slack", "teams", "email"]
+  },
+
+  "environments": {
+    "dev":     { "base_url": "https://dev.example.com",     "api_url": "https://dev.example.com/api" },
+    "staging": { "base_url": "https://staging.example.com", "api_url": "https://staging.example.com/api" },
+    "prod":    { "base_url": "https://prod.example.com",    "api_url": "https://prod.example.com/api" }
+  },
+
+  "default_env": "dev"
+}
