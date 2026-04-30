@@ -1,1 +1,0 @@
-"""ASTRA data generator package."""

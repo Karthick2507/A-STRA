@@ -72,8 +72,8 @@
   },
 
   "environments": {
-    "dev":     { "base_url": "https://dev.example.com",     "api_url": "https://dev.example.com/api" },
-    "staging": { "base_url": "https://staging.example.com", "api_url": "https://staging.example.com/api" },
+    "mod":     { "base_url": "https://mrm.stg.freewheel.tv/",     "api_url": "https://mrm.stg.freewheel.tv/" },
+    "stg": { "base_url": "https://mrm.stg.freewheel.tv/", "api_url": "https://mrm.stg.freewheel.tv/" },
     "prod":    { "base_url": "https://prod.example.com",    "api_url": "https://prod.example.com/api" }
   },
 

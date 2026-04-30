@@ -1,1 +1,0 @@
-"""ASTRA UI schemas package."""
