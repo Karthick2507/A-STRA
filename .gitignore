@@ -36,17 +36,17 @@ pytest_cache/
 
 # Playwright
 test-results/
-playwright-report/
+Astra_OLD/playwright-report/
 
 # Logs
-logs/
+Astra_OLD/logs/
 *.log
 
 # Reports
-reports/
+Astra_OLD/reports/
 
 # Generated tests
-tests/generated/
+Astra_OLD/tests/generated/
 
 # IDE
 .vscode/

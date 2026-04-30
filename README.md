@@ -90,7 +90,7 @@ Two-tier:
 * `.env` — secrets (tokens, passwords, webhook URLs, SMTP creds). **Never committed.**
 
 Selecting an environment:
-* CLI flag: `python main.py ui --env=staging`
+* CLI flag: `python main.py ui --env=stg`
 * Env var: `ASTRA_ENV=staging pytest`
 * Default from `config.json` → `default_env`
 
