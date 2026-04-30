@@ -85,8 +85,8 @@ class AStarEngine:
         self.healer  = healer
         self._h      = AStarHeuristic(goal)
         self._builder = GraphBuilder(data_path)
-        self._max_iter = max_iterations or CONFIG.astar.get("max_iterations", 500)
-        self._w        = heuristic_weight or CONFIG.astar.get("heuristic_weight", 1.0)
+        self._max_iter = max_iterations or CONFIG.astar_max_iterations
+        self._w        = heuristic_weight or CONFIG.astar_heuristic_weight
 
     def search(self, start_url: Optional[str] = None) -> AStarResult:
         """Run A* from current page (or `start_url` if given)."""

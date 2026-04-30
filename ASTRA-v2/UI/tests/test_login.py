@@ -29,7 +29,7 @@ def login_page(page):
 
 @pytest.fixture
 def base_url() -> str:
-    return CONFIG.environments[CONFIG.default_env]["base_url"]
+    return CONFIG.base_url
 
 
 class TestLogin:

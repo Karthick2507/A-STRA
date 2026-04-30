@@ -28,8 +28,7 @@ _SPEC_FILE = Path("Data/API/openapi_example.json")
 
 @pytest.fixture(scope="session")
 def api_base_url() -> str:
-    env = CONFIG.default_env
-    return CONFIG.environments[env]["api_url"]
+    return CONFIG.api_url
 
 
 @pytest.fixture(scope="session")

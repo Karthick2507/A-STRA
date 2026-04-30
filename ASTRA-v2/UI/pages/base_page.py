@@ -49,9 +49,7 @@ _GLOBAL_REGISTRY: Optional[LocatorRegistry] = None
 def _get_registry() -> LocatorRegistry:
     global _GLOBAL_REGISTRY
     if _GLOBAL_REGISTRY is None:
-        _GLOBAL_REGISTRY = LocatorRegistry(
-            CONFIG.paths.get("locator_registry_db", "Data/locators/locator_registry.db")
-        )
+        _GLOBAL_REGISTRY = LocatorRegistry(CONFIG.locator_registry_path)
     return _GLOBAL_REGISTRY
 
 
@@ -68,9 +66,9 @@ class BasePage:
         self.page      = page
         self._registry = _get_registry()
         self._healing_cfg = HealingConfig(
-            enabled=CONFIG.self_healing.get("enabled", True),
-            auto_apply_silent=CONFIG.self_healing.get("auto_apply_silent", True),
-            min_confidence=CONFIG.self_healing.get("min_confidence", 0.75),
+            enabled=CONFIG.healing_enabled,
+            auto_apply_silent=CONFIG.healing_auto_apply_silent,
+            min_confidence=CONFIG.healing_min_confidence,
         )
         self._healer = HealerOrchestrator(self._registry, config=self._healing_cfg)
         self._register_locators()

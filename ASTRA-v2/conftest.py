@@ -49,7 +49,7 @@ def pytest_runtest_logreport(report) -> None:
 
 def pytest_sessionfinish(session, exitstatus) -> None:
     elapsed = time.time() - _run_stats["start"]
-    env = CONFIG.default_env
+    env = CONFIG.env
     branch = os.getenv("GIT_BRANCH", os.getenv("BRANCH_NAME", ""))
     job_url = os.getenv("BUILD_URL", "")
 
@@ -77,24 +77,19 @@ def pytest_sessionfinish(session, exitstatus) -> None:
 
 @pytest.fixture(scope="session")
 def browser_type_launch_args():
-    browser_cfg = CONFIG.browser
     return {
-        "headless": browser_cfg.get("headless", True),
-        "slow_mo":  browser_cfg.get("slow_mo_ms", 0),
+        "headless": CONFIG.headless,
+        "slow_mo":  CONFIG.slow_mo_ms,
         "args":     ["--no-sandbox", "--disable-dev-shm-usage"],
     }
 
 
 @pytest.fixture(scope="function")
 def browser_context_args(tmp_path):
-    browser_cfg = CONFIG.browser
-    vp = browser_cfg.get("viewport", {"width": 1280, "height": 720})
     opts = {
-        "viewport": vp,
-        "record_video_dir": str(tmp_path / "videos") if browser_cfg.get("video", False) else None,
+        "viewport": CONFIG.viewport,
+        "record_video_dir": str(tmp_path / "videos") if CONFIG.attach_videos else None,
     }
-    if browser_cfg.get("trace", False):
-        opts["record_trace"] = True
     return {k: v for k, v in opts.items() if v is not None}
 
 
@@ -103,13 +98,13 @@ def page(browser: Browser, browser_context_args: dict, request) -> Generator[Pag
     context: BrowserContext = browser.new_context(**browser_context_args)
 
     # Start tracing if configured
-    trace_enabled = CONFIG.browser.get("trace", False)
+    trace_enabled = CONFIG.attach_traces
     if trace_enabled:
         context.tracing.start(screenshots=True, snapshots=True)
 
     pg: Page = context.new_page()
-    pg.set_default_timeout(CONFIG.browser.get("timeout_ms", 30_000))
-    pg.set_default_navigation_timeout(CONFIG.browser.get("navigation_timeout_ms", 30_000))
+    pg.set_default_timeout(CONFIG.action_timeout_ms)
+    pg.set_default_navigation_timeout(CONFIG.navigation_timeout_ms)
 
     yield pg
 
@@ -143,10 +138,8 @@ def pytest_runtest_makereport(item, call):
 def api_client():
     """Session-scoped APIClient using Bearer token from environment / config."""
     from API.client import APIClient, BearerAuth
-    env_cfg = CONFIG.environments.get(CONFIG.default_env, {})
-    api_url = env_cfg.get("api_url", "")
-    token   = os.getenv("API_TOKEN", "")
-    auth    = BearerAuth(token) if token else None
-    client  = APIClient(api_url, auth=auth)
+    token = CONFIG.bearer_token or os.getenv("API_TOKEN", "")
+    auth  = BearerAuth(token) if token else None
+    client = APIClient(CONFIG.api_url, auth=auth)
     yield client
     # No explicit close needed (context-manager pattern used per-test)
