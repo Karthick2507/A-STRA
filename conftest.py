@@ -1,144 +1,145 @@
-"""ASTRA Framework - Full pytest/playwright configuration (replaces playwright.config.ts)."""
+"""
+ASTRA-v2 root conftest.py.
+
+Provides pytest fixtures shared across all tests:
+  - browser / page (Playwright, per-test context)
+  - api_client (APIClient session-scoped, auth from config)
+  - allure failure hooks (screenshot + trace on test failure)
+  - run_report accumulator + post-run notify_all call
+"""
 from __future__ import annotations
 
 import os
+import time
 from pathlib import Path
 from typing import Generator
 
 import pytest
-from playwright.sync_api import Browser, BrowserContext, Page, Playwright, sync_playwright
+from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
 
-# ── Env defaults (mirrors playwright.config.ts env helpers) ─────────────────
-BASE_URL         = os.getenv("BASE_URL", "http://localhost:3000")
-HEADLESS        = os.getenv("HEADLESS", "false").lower() != "false"
-SLOW_MO         = int(os.getenv("SLOW_MO", "0"))
-BROWSER_NAME    = os.getenv("BROWSER", "chromium")          # chromium | firefox | webkit
-VIEWPORT_W      = int(os.getenv("VIEWPORT_WIDTH",  "1280"))
-VIEWPORT_H      = int(os.getenv("VIEWPORT_HEIGHT", "720"))
-ACTION_TIMEOUT  = int(os.getenv("ACTION_TIMEOUT",  "15000"))
-NAV_TIMEOUT     = int(os.getenv("NAV_TIMEOUT",     "30000"))
-BEARER_TOKEN    = os.getenv("BEARER_TOKEN", "")
-TOKEN_TYPE      = os.getenv("TOKEN_TYPE", "Bearer")
-REPORT_DIR      = Path(os.getenv("TEST_REPORT_DIR", "reports/testResults"))
+from core.config import CONFIG
+from core.logging import logger
+from core.reporting.allure_helper import attach_screenshot, attach_trace
+from core.reporting.notifiers import RunReport, notify_all
 
 
-# ── Pytest hooks ────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# Session-level counters for notify_all
+# ──────────────────────────────────────────────────────────────────────────────
 
-def pytest_configure(config: pytest.Config) -> None:
-    """Register custom markers."""
-    for marker in [
-        "ui: UI browser tests",
-        "api: API tests",
-        "e2e: End-to-end tests",
-        "positive: Positive test cases",
-        "negative: Negative test cases",
-    ]:
-        config.addinivalue_line("markers", marker)
+_run_stats = {"total": 0, "passed": 0, "failed": 0, "skipped": 0, "start": 0.0, "failures": []}
 
 
-def pytest_runtest_makereport(item, call):
-    """Attach screenshots to failed tests (mirrors screenshot: 'only-on-failure')."""
-    if call.when == "call" and call.excinfo is not None:
-        page: Page | None = item.funcargs.get("page")
-        if page:
-            REPORT_DIR.mkdir(parents=True, exist_ok=True)
-            safe_name = item.nodeid.replace("/", "_").replace("::", "__")
-            page.screenshot(path=str(REPORT_DIR / f"FAIL_{safe_name}.png"))
+def pytest_sessionstart(session) -> None:
+    _run_stats["start"] = time.time()
 
 
-# ── Browser launch args (mirrors playwright.config.ts `use` block) ───────────
-
-@pytest.fixture(scope="session")
-def browser_type_launch_args(browser_type_launch_args: dict) -> dict:
-    """Headless + slowMo — replaces playwright.config.ts use.headless / use.slowMo."""
-    return {
-        **browser_type_launch_args,
-        "headless": HEADLESS,
-        "slow_mo": SLOW_MO,
-    }
-
-
-@pytest.fixture(scope="session")
-def browser_context_args(browser_context_args: dict) -> dict:
-    """
-    Viewport, ignoreHTTPSErrors, extraHTTPHeaders, default timeouts.
-    Mirrors playwright.config.ts use.viewport / ignoreHTTPSErrors / extraHTTPHeaders.
-    """
-    extra_headers = {}
-    if BEARER_TOKEN:
-        extra_headers["Authorization"] = f"{TOKEN_TYPE} {BEARER_TOKEN}"
-
-    return {
-        **browser_context_args,
-        "base_url": BASE_URL,
-        "viewport": {"width": VIEWPORT_W, "height": VIEWPORT_H},
-        "ignore_https_errors": True,
-        "extra_http_headers": extra_headers,
-    }
+def pytest_runtest_logreport(report) -> None:
+    if report.when != "call":
+        return
+    _run_stats["total"] += 1
+    if report.passed:
+        _run_stats["passed"] += 1
+    elif report.failed:
+        _run_stats["failed"] += 1
+        _run_stats["failures"].append(report.nodeid)
+    elif report.skipped:
+        _run_stats["skipped"] += 1
 
 
-@pytest.fixture(scope="session")
-def browser_name() -> str:
-    """Select browser from BROWSER env var — mirrors playwright.config.ts projects."""
-    return BROWSER_NAME
+def pytest_sessionfinish(session, exitstatus) -> None:
+    elapsed = time.time() - _run_stats["start"]
+    env = CONFIG.env
+    branch = os.getenv("GIT_BRANCH", os.getenv("BRANCH_NAME", ""))
+    job_url = os.getenv("BUILD_URL", "")
 
-
-# ── Tracing (mirrors trace: 'on-first-retry') ────────────────────────────────
-
-@pytest.fixture
-def context(browser: Browser) -> Generator[BrowserContext, None, None]:
-    """Browser context with tracing enabled on retry."""
-    ctx = browser.new_context(
-        viewport={"width": VIEWPORT_W, "height": VIEWPORT_H},
-        ignore_https_errors=True,
-        extra_http_headers={"Authorization": f"{TOKEN_TYPE} {BEARER_TOKEN}"} if BEARER_TOKEN else {},
-        record_video_dir=str(REPORT_DIR / "videos") if os.getenv("RECORD_VIDEO") else None,
+    report = RunReport(
+        total=_run_stats["total"],
+        passed=_run_stats["passed"],
+        failed=_run_stats["failed"],
+        skipped=_run_stats["skipped"],
+        duration=elapsed,
+        env=env,
+        branch=branch,
+        job_url=job_url,
+        failures=_run_stats["failures"][:5],
     )
-    ctx.set_default_timeout(ACTION_TIMEOUT)
-    ctx.set_default_navigation_timeout(NAV_TIMEOUT)
-    ctx.tracing.start(screenshots=True, snapshots=True, sources=True)
-    yield ctx
-    # Save trace on failure (mirrors trace: 'on-first-retry')
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    ctx.tracing.stop(path=str(REPORT_DIR / "trace.zip"))
-    ctx.close()
+    logger.info(
+        "Run complete: %d total, %d passed, %d failed, %.1fs",
+        report.total, report.passed, report.failed, elapsed,
+    )
+    notify_all(report)
 
 
-@pytest.fixture
-def page(context: BrowserContext) -> Generator[Page, None, None]:
-    """Standard page with action + navigation timeouts."""
-    p = context.new_page()
-    p.set_default_timeout(ACTION_TIMEOUT)
-    p.set_default_navigation_timeout(NAV_TIMEOUT)
-    yield p
-    p.close()
-
-
-# ── Auth fixtures ────────────────────────────────────────────────────────────
-
-@pytest.fixture
-def authenticated_page(page: Page) -> Page:
-    """Returns a page already logged in."""
-    login_url = os.getenv("LOGIN_URL", f"{BASE_URL}/login")
-    username  = os.getenv("APP_USERNAME", "")
-    password  = os.getenv("APP_PASSWORD", "")
-    page.goto(login_url)
-    page.fill("[name=username], [name=email], #username, #email", username)
-    page.fill("[name=password], #password", password)
-    page.click("[type=submit], button:has-text('Login'), button:has-text('Sign in')")
-    page.wait_for_load_state("networkidle")
-    return page
-
-
-@pytest.fixture
-def api_headers() -> dict:
-    """HTTP headers with Bearer token for API tests."""
-    headers = {"Content-Type": "application/json"}
-    if BEARER_TOKEN:
-        headers["Authorization"] = f"{TOKEN_TYPE} {BEARER_TOKEN}"
-    return headers
-
+# ──────────────────────────────────────────────────────────────────────────────
+# Playwright browser fixture
+# ──────────────────────────────────────────────────────────────────────────────
 
 @pytest.fixture(scope="session")
-def base_url() -> str:
-    return BASE_URL
+def browser_type_launch_args():
+    return {
+        "headless": CONFIG.headless,
+        "slow_mo":  CONFIG.slow_mo_ms,
+        "args":     ["--no-sandbox", "--disable-dev-shm-usage"],
+    }
+
+
+@pytest.fixture(scope="function")
+def browser_context_args(tmp_path):
+    opts = {
+        "viewport": CONFIG.viewport,
+        "record_video_dir": str(tmp_path / "videos") if CONFIG.attach_videos else None,
+    }
+    return {k: v for k, v in opts.items() if v is not None}
+
+
+@pytest.fixture(scope="function")
+def page(browser: Browser, browser_context_args: dict, request) -> Generator[Page, None, None]:
+    context: BrowserContext = browser.new_context(**browser_context_args)
+
+    # Start tracing if configured
+    trace_enabled = CONFIG.attach_traces
+    if trace_enabled:
+        context.tracing.start(screenshots=True, snapshots=True)
+
+    pg: Page = context.new_page()
+    pg.set_default_timeout(CONFIG.action_timeout_ms)
+    pg.set_default_navigation_timeout(CONFIG.navigation_timeout_ms)
+
+    yield pg
+
+    # On failure — attach screenshot + trace to Allure
+    if request.node.rep_call.failed if hasattr(request.node, "rep_call") else False:
+        attach_screenshot(pg, name="failure-screenshot")
+        if trace_enabled:
+            trace_path = str(Path("Data/traces") / f"{request.node.name}.zip")
+            Path("Data/traces").mkdir(parents=True, exist_ok=True)
+            context.tracing.stop(path=trace_path)
+            attach_trace(trace_path)
+    else:
+        if trace_enabled:
+            context.tracing.stop()
+
+    context.close()
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    rep = outcome.get_result()
+    setattr(item, f"rep_{rep.when}", rep)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# API client fixture
+# ──────────────────────────────────────────────────────────────────────────────
+
+@pytest.fixture(scope="session")
+def api_client():
+    """Session-scoped APIClient using Bearer token from environment / config."""
+    from API.client import APIClient, BearerAuth
+    token = CONFIG.bearer_token or os.getenv("API_TOKEN", "")
+    auth  = BearerAuth(token) if token else None
+    client = APIClient(CONFIG.api_url, auth=auth)
+    yield client
+    # No explicit close needed (context-manager pattern used per-test)
