@@ -160,38 +160,51 @@ def cmd_registry(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="astra-v2", description="ASTRA-v2 automation framework")
-    p.add_argument("--env", help="Environment override (dev|staging|prod)")
+    # Shared parent so --env is accepted both BEFORE and AFTER the subcommand:
+    #   python main.py --env=staging ui ...   ← before subcommand
+    #   python main.py ui --env=staging ...   ← after subcommand (most natural)
+    _common = argparse.ArgumentParser(add_help=False)
+    _common.add_argument(
+        "--env",
+        help="Environment override (dev|staging|prod). "
+             "Also accepted via ASTRA_ENV env var or config.json default_env.",
+    )
+
+    p = argparse.ArgumentParser(
+        prog="astra-v2",
+        description="ASTRA-v2 automation framework",
+        parents=[_common],
+    )
     sub = p.add_subparsers(dest="cmd")
 
-    sub.add_parser("preflight", help="Validate config + imports")
+    sub.add_parser("preflight", parents=[_common], help="Validate config + imports")
 
-    ui = sub.add_parser("ui", help="Run UI tests")
+    ui = sub.add_parser("ui", parents=[_common], help="Run UI tests")
     ui.add_argument("--browser", choices=["chromium", "firefox", "webkit"])
     ui.add_argument("-m", "--marker", help="pytest marker filter")
     ui.add_argument("-n", "--parallel", help="parallel workers (e.g. auto, 4)")
 
-    api = sub.add_parser("api", help="Run API tests")
+    api = sub.add_parser("api", parents=[_common], help="Run API tests")
     api.add_argument("-m", "--marker", help="pytest marker filter")
     api.add_argument("-n", "--parallel", help="parallel workers")
 
-    e2e = sub.add_parser("e2e", help="Run UI + API tests")
+    e2e = sub.add_parser("e2e", parents=[_common], help="Run UI + API tests")
     e2e.add_argument("--browser", choices=["chromium", "firefox", "webkit"])
     e2e.add_argument("-m", "--marker", help="pytest marker filter")
 
-    ap = sub.add_parser("autopilot", help="Run A* autopilot to generate a test")
-    ap.add_argument("--url",      required=True, help="Start URL")
+    ap = sub.add_parser("autopilot", parents=[_common], help="Run A* autopilot to generate a test")
+    ap.add_argument("--url",           required=True, help="Start URL")
     ap.add_argument("--goal-url",      help="Goal URL pattern (glob or re:<regex>)")
     ap.add_argument("--goal-text",     help="Goal visible text")
     ap.add_argument("--goal-selector", help="Goal CSS/element selector")
 
-    sh = sub.add_parser("shadow", help="Launch playwright codegen + enhance to POM")
+    sh = sub.add_parser("shadow", parents=[_common], help="Launch playwright codegen + enhance to POM")
     sh.add_argument("--url", required=True, help="Start URL")
 
-    tr = sub.add_parser("train", help="Train self-healing ML model")
+    tr = sub.add_parser("train", parents=[_common], help="Train self-healing ML model")
     tr.add_argument("--min-samples", type=int, default=30)
 
-    rg = sub.add_parser("registry", help="Inspect locator registry")
+    rg = sub.add_parser("registry", parents=[_common], help="Inspect locator registry")
     rg.add_argument("--export", help="Export registry to JSON file at this path")
 
     return p
