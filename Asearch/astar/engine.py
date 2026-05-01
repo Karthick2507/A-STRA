@@ -32,7 +32,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set, TYPE_CHECKING
 
 from core.logging import logger
-from core.config import CONFIG
+from core.config.config_loader import CONFIG
 from Asearch.astar.node import AStarNode, AStarNodeEntry, _normalise_url
 from Asearch.astar.heuristic import AStarHeuristic, GoalSpec
 from Asearch.astar.graph_builder import Action, GraphBuilder

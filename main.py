@@ -15,9 +15,9 @@ Subcommands
 Examples
 ────────
     python main.py preflight
-    python main.py ui --env=staging --browser=chromium -m smoke
-    python main.py autopilot --url https://app.example.com/login --goal-text "Welcome"
-    python main.py shadow --url https://app.example.com
+    python main.py ui --env=stg --browser=chromium -m smoke
+    python main.py autopilot --url https://mrm.stg.freewheel.tv/ --goal-text "Welcome"
+    python main.py shadow --url --url https://mrm.stg.freewheel.tv/
     python main.py train
 """
 from __future__ import annotations
