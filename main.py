@@ -7,7 +7,6 @@ Subcommands
     ui             Run UI tests (delegates to pytest UI/tests)
     api            Run API tests (delegates to pytest API/tests)
     e2e            Run UI + API together
-    autopilot      Launch the A* autopilot to discover a goal & emit test code
     shadow         Launch shadow coding (playwright codegen) and enhance output
     train          Train the self-healing ML model from collected JSONL data
     registry       Inspect locator registry stats / export
@@ -16,8 +15,7 @@ Examples
 ────────
     python main.py preflight
     python main.py ui --env=stg --browser=chromium -m smoke
-    python main.py autopilot --url https://mrm.stg.freewheel.tv/ --goal-text "Welcome"
-    python main.py shadow --url --url https://mrm.stg.freewheel.tv/
+    python main.py shadow --url https://mrm.stg.freewheel.tv/
     python main.py train
 """
 from __future__ import annotations
@@ -87,32 +85,6 @@ def cmd_e2e(args: argparse.Namespace) -> int:
     if args.marker:
         pytest_args += ["-m", args.marker]
     return pytest.main(pytest_args)
-
-
-def cmd_autopilot(args: argparse.Namespace) -> int:
-    from playwright.sync_api import sync_playwright
-    from Asearch.astar.heuristic import GoalSpec
-    from Asearch.autopilot import AutopilotRunner
-
-    goal = GoalSpec(
-        url_patterns=[args.goal_url] if args.goal_url else [],
-        text_patterns=[args.goal_text] if args.goal_text else [],
-        element_selectors=[args.goal_selector] if args.goal_selector else [],
-    )
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=Config.headless)
-        page = browser.new_page()
-        runner = AutopilotRunner(page=page, goal=goal, start_url=args.url)
-        result = runner.run()
-        browser.close()
-
-    if result.success:
-        print(f"Autopilot OK — {result.astar.nodes_visited} nodes visited")
-        print(f"Generated test: {result.test_file}")
-        return 0
-    print(f"Autopilot failed: {result.astar.reason}")
-    return 1
 
 
 def cmd_shadow(args: argparse.Namespace) -> int:
@@ -194,12 +166,6 @@ def build_parser() -> argparse.ArgumentParser:
     e2e.add_argument("--browser", choices=["chromium", "firefox", "webkit"])
     e2e.add_argument("-m", "--marker", help="pytest marker filter")
 
-    ap = sub.add_parser("autopilot", parents=[_common], help="Run A* autopilot to generate a test")
-    ap.add_argument("--url",           required=True, help="Start URL")
-    ap.add_argument("--goal-url",      help="Goal URL pattern (glob or re:<regex>)")
-    ap.add_argument("--goal-text",     help="Goal visible text")
-    ap.add_argument("--goal-selector", help="Goal CSS/element selector")
-
     sh = sub.add_parser("shadow", parents=[_common], help="Launch playwright codegen + enhance to POM")
     sh.add_argument("--url", required=True, help="Start URL")
 
@@ -225,7 +191,6 @@ def main() -> int:
         "ui":        cmd_ui,
         "api":       cmd_api,
         "e2e":       cmd_e2e,
-        "autopilot": cmd_autopilot,
         "shadow":    cmd_shadow,
         "train":     cmd_train,
         "registry":  cmd_registry,
