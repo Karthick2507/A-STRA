@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 
 from core.logging import logger
-from core.config import CONFIG
+from core.config.config_loader import CONFIG
 from Asearch.astar.engine import AStarEngine, AStarResult
 from Asearch.astar.heuristic import GoalSpec
 from Asearch.astar.graph_builder import Action

@@ -33,6 +33,8 @@ venv.bak/
 # pytest
 .pytest_cache/
 pytest_cache/
+sessions
+sessions/
 
 # Playwright
 test-results/
