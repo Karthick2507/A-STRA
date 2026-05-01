@@ -18,8 +18,7 @@
   "timeouts": {
     "action_ms": 15000,
     "navigation_ms": 30000,
-    "expect_ms": 10000,
-    "astar_goal_ms": 60000
+    "expect_ms": 10000
   },
 
   "retry": {
@@ -34,21 +33,6 @@
     "registry_path": "Data/locators/locator_registry.db",
     "model_path": "Asearch/self_healing/ml/models/healer_model.onnx",
     "sklearn_model_path": "Asearch/self_healing/ml/models/healer_model.pkl"
-  },
-
-  "astar": {
-    "max_iterations": 500,
-    "heuristic_weight": 1.0,
-    "allow_optional_fields": false,
-    "success_text_patterns": [
-      "submitted successfully",
-      "saved successfully",
-      "success",
-      "submitted",
-      "saved",
-      "created",
-      "thank you"
-    ]
   },
 
   "shadow_coding": {

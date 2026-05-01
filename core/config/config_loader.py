@@ -81,7 +81,6 @@ class Config:
     action_timeout_ms:     int = 15000
     navigation_timeout_ms: int = 30000
     expect_timeout_ms:     int = 10000
-    astar_goal_timeout_ms: int = 60000
 
     # Retry
     retry_max_attempts:    int       = 3
@@ -94,12 +93,6 @@ class Config:
     locator_registry_path:     str    = "Data/locators/locator_registry.db"
     onnx_model_path:           str    = "Asearch/self_healing/ml/models/healer_model.onnx"
     sklearn_model_path:        str    = "Asearch/self_healing/ml/models/healer_model.pkl"
-
-    # A*
-    astar_max_iterations:      int        = 500
-    astar_heuristic_weight:    float      = 1.0
-    astar_allow_optional:      bool       = False
-    astar_success_patterns:    List[str]  = field(default_factory=list)
 
     # Shadow coding
     shadow_session_dir:        str        = "Asearch/shadow_coding/sessions"
@@ -212,7 +205,6 @@ def load_config() -> Config:
     cfg.action_timeout_ms     = int(t.get("action_ms",      15000))
     cfg.navigation_timeout_ms = int(t.get("navigation_ms",  30000))
     cfg.expect_timeout_ms     = int(t.get("expect_ms",      10000))
-    cfg.astar_goal_timeout_ms = int(t.get("astar_goal_ms",  60000))
 
     # Retry
     r = raw.get("retry", {})
@@ -227,13 +219,6 @@ def load_config() -> Config:
     cfg.locator_registry_path     = h.get("registry_path",       cfg.locator_registry_path)
     cfg.onnx_model_path           = h.get("model_path",          cfg.onnx_model_path)
     cfg.sklearn_model_path        = h.get("sklearn_model_path",  cfg.sklearn_model_path)
-
-    # A*
-    a = raw.get("astar", {})
-    cfg.astar_max_iterations   = int(a.get("max_iterations", 500))
-    cfg.astar_heuristic_weight = float(a.get("heuristic_weight", 1.0))
-    cfg.astar_allow_optional   = bool(a.get("allow_optional_fields", False))
-    cfg.astar_success_patterns = list(a.get("success_text_patterns", []))
 
     # Shadow coding
     s = raw.get("shadow_coding", {})

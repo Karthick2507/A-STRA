@@ -1,1 +1,1 @@
-"""ASTRA-v2 A* search + self-healing package."""
+"""ASTRA-v2 self-healing + shadow-coding package."""
