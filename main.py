@@ -126,8 +126,10 @@ def cmd_shadow(args: argparse.Namespace) -> int:
     print(f"Raw codegen output: {final.raw_file}")
 
     enhancer = CodeEnhancer(session_id=final.session_id)
-    enhanced = enhancer.enhance_file(final.raw_file)
-    print(f"Enhanced POM test: {enhanced}")
+    files = enhancer.enhance_file(final.raw_file)
+    print(f"Generated UI page object : {files['ui']}")
+    print(f"Generated test data      : {files['data']}")
+    print(f"Generated base page      : {files['base_page']}")
     return 0
 
 
