@@ -77,5 +77,5 @@
     "prod":    { "base_url": "https://prod.example.com",    "api_url": "https://prod.example.com/api" }
   },
 
-  "default_env": "dev"
+  "default_env": "stg"
 }
