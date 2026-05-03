@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -32,10 +32,6 @@ PROJECT_ROOT = _HERE.parent.parent.parent          # …/PRISM
 REPO_ROOT    = PROJECT_ROOT.parent                 # repo root
 CONFIG_JSON  = PROJECT_ROOT / "config.json"
 ENV_FILE     = PROJECT_ROOT / ".env"
-
-# Load .env once at import time
-load_dotenv(dotenv_path=ENV_FILE, override=False)
-
 
 # ---------------------------------------------------------------------------
 # Dataclass

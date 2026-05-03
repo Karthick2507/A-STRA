@@ -35,6 +35,11 @@ onnxruntime>=1.17.0         # CPU-only ONNX inference
 # ── YAML (OpenAPI spec parsing — optional)
 pyyaml>=6.0.1
 
+# ──  Playwrite Codegen
+playwright install
+
+
+
 # ── Notifications
 # httpx already covers Slack/Teams webhooks (HTTP POST)
 # smtplib is stdlib (email)
