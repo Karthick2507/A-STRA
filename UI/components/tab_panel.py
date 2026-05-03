@@ -1,5 +1,5 @@
 """
-ASTRA-v2 TabPanel component helper.
+PRISM TabPanel component helper.
 
 Abstracts tabbed-interface interactions for both ARIA-role tabs and common
 CSS tab patterns.

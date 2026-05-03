@@ -1,5 +1,5 @@
 """
-ASTRA-v2 Structured Logger.
+PRISM Structured Logger.
 
 Layers:
     1. Console handler with colour-coded levels (colorlog).

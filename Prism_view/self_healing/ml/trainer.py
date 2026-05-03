@@ -1,5 +1,5 @@
 """
-ASTRA-v2 ML Trainer.
+PRISM ML Trainer.
 
 Trains a Scikit-learn classifier on collected (broken, candidate, is_match)
 triples. The model learns to score 0..1 how likely a candidate is to be the

@@ -10,7 +10,7 @@
 
 ## Summary
 
-This session converted the PRISM/ASTRA framework from a TypeScript/Node.js stack to a full Python pytest stack, then built ASTRA-v2 — an 18-module automation framework with self-healing locators, ML re-ranking, A* autopilot, shadow coding, API testing, and CI pipelines.
+This session converted the PRISM/ASTRA framework from a TypeScript/Node.js stack to a full Python pytest stack, then built PRISM — an 18-module automation framework with self-healing locators, ML re-ranking, A* autopilot, shadow coding, API testing, and CI pipelines.
 
 ---
 
@@ -26,7 +26,7 @@ This session converted the PRISM/ASTRA framework from a TypeScript/Node.js stack
 | #10 | Claude/connect astra project 8bw di | 2026-04-28 |
 | #12 | Claude/connect astra project 8bw di | 2026-04-28 |
 | #13 | fix: clean up requirements.txt | 2026-04-28 |
-| #14 | feat: ASTRA-v2 — Complete Python automation framework (18 modules) | 2026-04-30 |
+| #14 | feat: PRISM — Complete Python automation framework (18 modules) | 2026-04-30 |
 | #17 | Merge from main (sync) | 2026-04-30 |
 | #18 | fix: --env flag accepted after subcommand | 2026-04-30 |
 | #19 | feat(shadow-coding): rewrite CodeEnhancer to generate 3 corporate-style files | 2026-05-01 |
@@ -57,11 +57,11 @@ This session converted the PRISM/ASTRA framework from a TypeScript/Node.js stack
 | `c45f923082` | 2026-04-30 | Merge pull request #15 from Karthick2507/delete_ts |
 | `ff004087c8` | 2026-04-30 | delete002 |
 | `edf0b14be1` | 2026-04-30 | Merge pull request #14 from Karthick2507/claude/connect-astra-project-8bwDI |
-| `3bea713f23` | 2026-04-30 | feat(ASTRA-v2): main.py CLI + README + flat Config field consistency |
-| `c640cb963c` | 2026-04-30 | feat(ASTRA-v2): Modules 12-18 — API client, data files, tests, reporting, CI |
-| `e63f597a97` | 2026-04-30 | feat(ASTRA-v2): Modules 9-11 — A* engine, Autopilot runner, Shadow Coding |
-| `dfe225b9df` | 2026-04-30 | feat(ASTRA-v2): Modules 6-8 — healer pipeline, POM base page, UI components |
-| `2524a96035` | 2026-04-30 | feat(ASTRA-v2): Module 5 — ML feature extractor, trainer, predictor |
+| `3bea713f23` | 2026-04-30 | feat(PRISM): main.py CLI + README + flat Config field consistency |
+| `c640cb963c` | 2026-04-30 | feat(PRISM): Modules 12-18 — API client, data files, tests, reporting, CI |
+| `e63f597a97` | 2026-04-30 | feat(PRISM): Modules 9-11 — A* engine, Autopilot runner, Shadow Coding |
+| `dfe225b9df` | 2026-04-30 | feat(PRISM): Modules 6-8 — healer pipeline, POM base page, UI components |
+| `2524a96035` | 2026-04-30 | feat(PRISM): Module 5 — ML feature extractor, trainer, predictor |
 | `c3717021b7` | 2026-04-29 | feat(astra-v2): modules 3-4 — locator registry + 6 healing strategies |
 | `5cc086123f` | 2026-04-29 | feat(astra-v2): modules 1-2 — core config, logging, retry |
 | `29ce50e575` | 2026-04-28 | Merge pull request #13 from Karthick2507/claude/connect-astra-project-8bwDI |
@@ -123,7 +123,7 @@ This session converted the PRISM/ASTRA framework from a TypeScript/Node.js stack
 - Added Python root config (`requirements.txt`, `conftest.py`, `pytest.ini`, `main.py`)
 - Rewrote `ReadMe.md` for the Python stack
 
-### Phase 2 — ASTRA-v2 Build (2026-04-29 – 2026-04-30)
+### Phase 2 — PRISM Build (2026-04-29 – 2026-04-30)
 18-module framework built in order:
 1. **Modules 1-2:** Core config (`Config` dataclass), custom logger (5 log levels), retry decorator
 2. **Modules 3-4:** SQLite locator registry, 6 healing strategies (id, name, aria, class, DOM, registry)

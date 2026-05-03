@@ -1,5 +1,5 @@
 """
-ASTRA-v2 Config Loader.
+PRISM Config Loader.
 
 Merges three sources, in increasing precedence:
 
@@ -28,7 +28,7 @@ from dotenv import load_dotenv
 # ---------------------------------------------------------------------------
 
 _HERE = Path(__file__).resolve()
-PROJECT_ROOT = _HERE.parent.parent.parent          # …/ASTRA-v2
+PROJECT_ROOT = _HERE.parent.parent.parent          # …/PRISM
 REPO_ROOT    = PROJECT_ROOT.parent                 # repo root
 CONFIG_JSON  = PROJECT_ROOT / "config.json"
 ENV_FILE     = PROJECT_ROOT / ".env"

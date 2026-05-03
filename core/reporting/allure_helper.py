@@ -1,5 +1,5 @@
 """
-ASTRA-v2 Allure Helper.
+PRISM Allure Helper.
 
 Thin wrappers around `allure-python-commons` so test and page code can
 attach evidence (screenshots, API payloads, logs) without importing allure

@@ -1,5 +1,5 @@
 """
-ASTRA-v2 root conftest.py.
+PRISM root conftest.py.
 
 Provides pytest fixtures shared across all tests:
   - browser / page (Playwright, per-test context)

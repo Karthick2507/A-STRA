@@ -1,5 +1,5 @@
 """
-ASTRA-v2 Shadow Coding — Recorder.
+PRISM Shadow Coding — Recorder.
 
 Wraps `playwright codegen` CLI so a tester can manually browse the app
 while the framework captures every action.  After recording, the raw

@@ -1,5 +1,5 @@
 """
-ASTRA-v2 Test Result Notifiers.
+PRISM Test Result Notifiers.
 
 Send a run summary to Slack, Microsoft Teams, or Email when tests finish.
 All channels are optional — configured via config.json / .env.
@@ -96,7 +96,7 @@ class SlackNotifier:
                 "color": color,
                 "title": f"{emoji} ASTRA — {report.status} ({report.env})",
                 "text":  report.summary_text(),
-                "footer": "ASTRA-v2",
+                "footer": "PRISM",
             }]
         }
         try:

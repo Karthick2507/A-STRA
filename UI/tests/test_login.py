@@ -1,5 +1,5 @@
 """
-ASTRA-v2 example UI test — Login flow.
+PRISM example UI test — Login flow.
 
 Demonstrates:
   - BasePage / LoginPage POM pattern

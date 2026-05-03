@@ -1,4 +1,4 @@
-"""ASTRA-v2 self-healing locator system."""
+"""PRISM self-healing locator system."""
 from Prism_view.self_healing.locator_registry import LocatorRegistry, LocatorRecord
 from Prism_view.self_healing.healer import HealerOrchestrator, HealResult, HealingConfig
 

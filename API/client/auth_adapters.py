@@ -1,5 +1,5 @@
 """
-ASTRA-v2 API Auth Adapters.
+PRISM API Auth Adapters.
 
 Each adapter exposes `.headers() → dict` so APIClient can inject them into
 every request.  Adapters that manage tokens also expose `.refresh()`.

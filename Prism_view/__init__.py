@@ -1,1 +1,1 @@
-"""ASTRA-v2 self-healing + shadow-coding package."""
+"""PRISM self-healing + shadow-coding package."""

@@ -1,5 +1,5 @@
 """
-ASTRA-v2 healing strategy base class + shared types.
+PRISM healing strategy base class + shared types.
 
 Every strategy implements:
     propose(page, broken_record) -> List[HealCandidate]

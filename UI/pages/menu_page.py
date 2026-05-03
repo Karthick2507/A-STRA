@@ -1,5 +1,5 @@
 """
-ASTRA-v2 MenuPage POM.
+PRISM MenuPage POM.
 
 Represents the application's main navigation menu after login.
 Demonstrates multi-element registration and nested navigation patterns.

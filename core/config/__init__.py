@@ -1,4 +1,4 @@
-"""ASTRA-v2 configuration package."""
+"""PRISM configuration package."""
 
 from core.config.config_loader import Config, load_config, CONFIG
 
