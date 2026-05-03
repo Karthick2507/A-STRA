@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from core.logging import logger
-from Asearch.self_healing.ml.feature_extractor import FEATURE_DIM
+from Prism_view.self_healing.ml.feature_extractor import FEATURE_DIM
 
 try:
     import onnxruntime as ort                                # type: ignore
@@ -40,8 +40,8 @@ class HealerPredictor:
 
     def __init__(
         self,
-        onnx_path: str | Path = "Asearch/self_healing/ml/models/healer_model.onnx",
-        pkl_path:  str | Path = "Asearch/self_healing/ml/models/healer_model.pkl",
+        onnx_path: str | Path = "Prism_view/self_healing/ml/models/healer_model.onnx",
+        pkl_path:  str | Path = "Prism_view/self_healing/ml/models/healer_model.pkl",
     ) -> None:
         self.onnx_path = Path(onnx_path)
         self.pkl_path  = Path(pkl_path)

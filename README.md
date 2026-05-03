@@ -47,7 +47,7 @@ A-STRA/
 │   ├── retry/                 @retry decorator with exponential backoff
 │   └── reporting/             Allure helpers + Slack/Teams/Email notifiers
 │
-├── Asearch/
+├── Prism_view/
 │   ├── self_healing/
 │   │   ├── locator_registry.py    SQLite-backed history of every locator
 │   │   ├── healer.py              Pipeline orchestrator + ML re-rank + auto-apply
@@ -133,7 +133,7 @@ python main.py api -m smoke
 ```bash
 python main.py shadow --url https://mrm.stg.example.com/
 # Browser opens — interact with the app, then close it.
-# Three files are generated in Asearch/shadow_coding/sessions/:
+# Three files are generated in Prism_view/shadow_coding/sessions/:
 #   {entity}_UI.py     — class-based POM with data-driven create_*() method
 #   {entity}_Data.json — extracted test data ({"MRM": [{"NetworkName": …}]})
 #   Base_page.py       — reusable methods (mrm_login, wait_until_page_loaded, …)
@@ -249,7 +249,7 @@ python main.py registry --export Data/locators/dump.json
 
 ## What was removed in this release
 
-The `autopilot` subcommand and the `Asearch/astar/` + `Asearch/autopilot/` packages
+The `autopilot` subcommand and the `Prism_view/astar/` + `Prism_view/autopilot/` packages
 were removed. Reasons:
 
 * **No auth context** — A\* couldn't handle login flows; on the FreeWheel MRM staging

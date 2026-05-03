@@ -9,12 +9,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
-from Asearch.self_healing.strategies.base import HealCandidate, HealingStrategy
+from Prism_view.self_healing.strategies.base import HealCandidate, HealingStrategy
 from core.logging import logger
 
 if TYPE_CHECKING:
     from playwright.sync_api import Page
-    from Asearch.self_healing.locator_registry import LocatorRecord
+    from Prism_view.self_healing.locator_registry import LocatorRecord
 
 
 class DomNeighbourStrategy(HealingStrategy):

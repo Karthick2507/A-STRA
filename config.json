@@ -31,12 +31,12 @@
     "auto_apply_silent": true,
     "min_confidence": 0.75,
     "registry_path": "Data/locators/locator_registry.db",
-    "model_path": "Asearch/self_healing/ml/models/healer_model.onnx",
-    "sklearn_model_path": "Asearch/self_healing/ml/models/healer_model.pkl"
+    "model_path": "Prism_view/self_healing/ml/models/healer_model.onnx",
+    "sklearn_model_path": "Prism_view/self_healing/ml/models/healer_model.pkl"
   },
 
   "shadow_coding": {
-    "session_dir": "Asearch/shadow_coding/sessions",
+    "session_dir": "Prism_view/shadow_coding/sessions",
     "auto_assertions": true,
     "assertion_checkpoints": ["page_load", "click", "navigation", "popup_visible"]
   },

@@ -34,15 +34,15 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from core.logging import logger
-from Asearch.self_healing.locator_registry import LocatorRecord, LocatorRegistry
-from Asearch.self_healing.strategies.base import HealCandidate
-from Asearch.self_healing.strategies import (
+from Prism_view.self_healing.locator_registry import LocatorRecord, LocatorRegistry
+from Prism_view.self_healing.strategies.base import HealCandidate
+from Prism_view.self_healing.strategies import (
     IdStrategy, NameStrategy, AriaStrategy,
     ClassStrategy, DomNeighbourStrategy, RegistryStrategy,
 )
-from Asearch.self_healing.ml.feature_extractor import FeatureExtractor
-from Asearch.self_healing.ml.predictor import HealerPredictor
-from Asearch.self_healing.ml.trainer import append_training_row
+from Prism_view.self_healing.ml.feature_extractor import FeatureExtractor
+from Prism_view.self_healing.ml.predictor import HealerPredictor
+from Prism_view.self_healing.ml.trainer import append_training_row
 
 if TYPE_CHECKING:
     from playwright.sync_api import Page

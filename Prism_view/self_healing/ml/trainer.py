@@ -44,7 +44,7 @@ try:
 except ImportError:                                          # pragma: no cover
     _ONNX_OK = False
 
-from Asearch.self_healing.ml.feature_extractor import FEATURE_DIM
+from Prism_view.self_healing.ml.feature_extractor import FEATURE_DIM
 
 
 @dataclass
@@ -63,8 +63,8 @@ class HealerTrainer:
     def __init__(
         self,
         training_data_path: str | Path = "Data/locators/training_data.jsonl",
-        sklearn_model_path: str | Path = "Asearch/self_healing/ml/models/healer_model.pkl",
-        onnx_model_path:    str | Path = "Asearch/self_healing/ml/models/healer_model.onnx",
+        sklearn_model_path: str | Path = "Prism_view/self_healing/ml/models/healer_model.pkl",
+        onnx_model_path:    str | Path = "Prism_view/self_healing/ml/models/healer_model.onnx",
     ) -> None:
         self.training_data_path = Path(training_data_path)
         self.sklearn_model_path = Path(sklearn_model_path)
