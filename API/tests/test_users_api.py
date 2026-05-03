@@ -1,5 +1,5 @@
 """
-ASTRA-v2 example API test — Users CRUD.
+PRISM example API test — Users CRUD.
 
 Demonstrates:
   - APIClient with BearerAuth fixture

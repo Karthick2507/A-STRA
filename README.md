@@ -1,4 +1,4 @@
-# ASTRA-v2
+# PRISM
 
 **A**utonomous **S**elf-healing **T**est **R**unner & **A**utomation framework — v2.
 

@@ -1,5 +1,5 @@
 """
-ASTRA-v2 WebSocket Client.
+PRISM WebSocket Client.
 
 Thin wrapper around `websockets` (sync via `websockets.sync.client`) for
 testing WebSocket endpoints.  Falls back to a stub if `websockets` is not

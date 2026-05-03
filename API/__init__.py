@@ -1,4 +1,4 @@
-"""ASTRA-v2 API testing layer — HTTP client, auth, WebSocket, OpenAPI."""
+"""PRISM API testing layer — HTTP client, auth, WebSocket, OpenAPI."""
 from API.client import APIClient, BearerAuth, BasicAuth, ApiKeyAuth
 from API.client import SessionCookieAuth, OAuth2ClientCredentials, WebSocketClient
 from API.openapi import OpenAPISpecLoader, EndpointSpec

@@ -1,5 +1,5 @@
 """
-ASTRA-v2 BasePage.
+PRISM BasePage.
 
 Every Page Object inherits from this class. It wraps Playwright's `Page` and
 injects the self-healing pipeline transparently so that broken locators are
@@ -56,7 +56,7 @@ def _get_registry() -> LocatorRegistry:
 # ──────────────────────────────────────────────────────────────────────────────
 
 class BasePage:
-    """Base class for all ASTRA-v2 Page Objects."""
+    """Base class for all PRISM Page Objects."""
 
     # Subclasses override this dict.
     # Format: { logical_name: (selector, kind, attributes[, neighbours]) }

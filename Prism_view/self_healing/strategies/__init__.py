@@ -1,4 +1,4 @@
-"""ASTRA-v2 self-healing strategies — ordered priority pipeline."""
+"""PRISM self-healing strategies — ordered priority pipeline."""
 from Prism_view.self_healing.strategies.base import HealingStrategy, HealCandidate
 from Prism_view.self_healing.strategies.id_strategy import IdStrategy
 from Prism_view.self_healing.strategies.name_strategy import NameStrategy

@@ -1,5 +1,5 @@
 """
-ASTRA-v2 Tooltip component helper.
+PRISM Tooltip component helper.
 
 Handles both CSS :hover-triggered tooltips and ARIA-described tooltips.
 Hover-reveal is done via JS mouse-over because Playwright's hover() can be

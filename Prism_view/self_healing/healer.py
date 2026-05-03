@@ -1,5 +1,5 @@
 """
-ASTRA-v2 Self-Healing Pipeline Orchestrator.
+PRISM Self-Healing Pipeline Orchestrator.
 
 HealerOrchestrator.heal(page, broken_record) runs the 6-strategy pipeline,
 ML re-ranks candidates, picks the best above min_confidence, verifies it on

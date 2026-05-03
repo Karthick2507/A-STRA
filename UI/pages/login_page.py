@@ -1,5 +1,5 @@
 """
-ASTRA-v2 LoginPage POM.
+PRISM LoginPage POM.
 
 Demonstrates the BasePage pattern: declare _LOCATORS once, then use
 logical names throughout all test methods.  Self-healing is automatic —

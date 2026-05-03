@@ -1,5 +1,5 @@
 """
-ASTRA-v2 CLI entry point.
+PRISM CLI entry point.
 
 Subcommands
 ───────────
@@ -24,14 +24,14 @@ import argparse
 import sys
 from pathlib import Path
 
-# Make ASTRA-v2 root importable
+# Make PRISM root importable
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from core.config.config_loader import Config
 
 
 def cmd_preflight(args: argparse.Namespace) -> int:
-    print(f"ASTRA-v2 preflight — env={Config.env}")
+    print(f"PRISM preflight — env={Config.env}")
     print(f"  base_url: {Config.base_url or '(not set)'}")
     print(f"  api_url:  {Config.api_url or '(not set)'}")
     print(f"  browser:  {Config.browser} (headless={Config.headless})")
@@ -146,7 +146,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = argparse.ArgumentParser(
         prog="astra-v2",
-        description="ASTRA-v2 automation framework",
+        description="PRISM automation framework",
         parents=[_common],
     )
     sub = p.add_subparsers(dest="cmd")

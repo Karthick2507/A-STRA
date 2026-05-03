@@ -1,4 +1,4 @@
-"""ASTRA-v2 Page Object Model pages."""
+"""PRISM Page Object Model pages."""
 from UI.pages.base_page import BasePage, LocatorHealingError, LocatorNotRegisteredError
 from UI.pages.login_page import LoginPage
 from UI.pages.menu_page import MenuPage

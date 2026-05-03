@@ -1,5 +1,5 @@
 """
-ASTRA-v2 OpenAPI Spec Loader.
+PRISM OpenAPI Spec Loader.
 
 Loads an OpenAPI 3.x (or Swagger 2.0) spec from a local file or URL and
 exposes the parsed endpoints for contract testing and auto-generated API

@@ -1,1 +1,1 @@
-"""ASTRA-v2 core foundation package."""
+"""PRISM core foundation package."""

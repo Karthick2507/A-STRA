@@ -1,4 +1,4 @@
-"""ASTRA-v2 API client with pluggable auth adapters."""
+"""PRISM API client with pluggable auth adapters."""
 from API.client.base_client import APIClient
 from API.client.auth_adapters import (
     BearerAuth, BasicAuth, ApiKeyAuth,

@@ -1,5 +1,5 @@
 """
-ASTRA-v2 API Base Client.
+PRISM API Base Client.
 
 Wraps `httpx` with:
   - Pluggable auth adapters (Bearer, Basic, API-Key, Session Cookie, OAuth2)

@@ -1,5 +1,5 @@
 """
-ASTRA-v2 ML Predictor.
+PRISM ML Predictor.
 
 Runs at *inference* time inside the self-healing pipeline. Loads either:
 

@@ -1,5 +1,5 @@
 """
-ASTRA-v2 Locator Registry (SQLite-backed).
+PRISM Locator Registry (SQLite-backed).
 
 Schema:
 

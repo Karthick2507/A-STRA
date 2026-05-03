@@ -1,5 +1,5 @@
 """
-ASTRA-v2 Retry Handler.
+PRISM Retry Handler.
 
 Decorator-based retry with exponential backoff. Used by:
     - API client (transient HTTP errors)

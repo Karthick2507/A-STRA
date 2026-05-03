@@ -2,7 +2,7 @@
   "_comment": "Non-secret defaults. Secrets live in .env. Override via --env=staging|prod|dev.",
 
   "framework": {
-    "name": "ASTRA-v2",
+    "name": "PRISM",
     "version": "2.0.0"
   },
 

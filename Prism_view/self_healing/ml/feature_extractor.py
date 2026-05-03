@@ -1,5 +1,5 @@
 """
-ASTRA-v2 ML Feature Extractor.
+PRISM ML Feature Extractor.
 
 Converts a (broken_locator, candidate_element) pair into a fixed-length numeric
 feature vector suitable for a Scikit-learn classifier or ONNX model.

@@ -1,5 +1,5 @@
 """
-ASTRA-v2 Popup / Modal component helper.
+PRISM Popup / Modal component helper.
 
 Wraps common modal/dialog patterns so page objects don't repeat the same
 wait-confirm-dismiss logic. Works with both browser-native dialogs and
