@@ -37,8 +37,8 @@ from typing import Any, Dict, Optional, Tuple, TYPE_CHECKING
 
 from core.logging import logger
 from core.config import CONFIG
-from Asearch.self_healing.locator_registry import LocatorRecord, LocatorRegistry
-from Asearch.self_healing.healer import HealerOrchestrator, HealingConfig
+from Prism_view.self_healing.locator_registry import LocatorRecord, LocatorRegistry
+from Prism_view.self_healing.healer import HealerOrchestrator, HealingConfig
 
 if TYPE_CHECKING:
     from playwright.sync_api import Page, Locator

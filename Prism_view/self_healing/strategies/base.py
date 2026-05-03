@@ -15,7 +15,7 @@ from typing import Any, Dict, List, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from playwright.sync_api import Page
-    from Asearch.self_healing.locator_registry import LocatorRecord
+    from Prism_view.self_healing.locator_registry import LocatorRecord
 
 
 @dataclass

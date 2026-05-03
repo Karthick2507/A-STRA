@@ -91,11 +91,11 @@ class Config:
     healing_auto_apply_silent: bool   = True
     healing_min_confidence:    float  = 0.75
     locator_registry_path:     str    = "Data/locators/locator_registry.db"
-    onnx_model_path:           str    = "Asearch/self_healing/ml/models/healer_model.onnx"
-    sklearn_model_path:        str    = "Asearch/self_healing/ml/models/healer_model.pkl"
+    onnx_model_path:           str    = "Prism_view/self_healing/ml/models/healer_model.onnx"
+    sklearn_model_path:        str    = "Prism_view/self_healing/ml/models/healer_model.pkl"
 
     # Shadow coding
-    shadow_session_dir:        str        = "Asearch/shadow_coding/sessions"
+    shadow_session_dir:        str        = "Prism_view/shadow_coding/sessions"
     shadow_auto_assertions:    bool       = True
     shadow_checkpoints:        List[str]  = field(default_factory=list)
 

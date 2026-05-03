@@ -8,7 +8,7 @@ into ASTRA POM style with auto-assertions.
 
 Workflow
 ────────
-    recorder = ShadowRecorder(output_dir="Asearch/shadow_coding/sessions")
+    recorder = ShadowRecorder(output_dir="Prism_view/shadow_coding/sessions")
     session  = recorder.start(url="https://app.example.com/login")
     # ← user interacts in the browser window opened by codegen
     result   = recorder.stop()          # blocks until codegen exits
@@ -17,7 +17,7 @@ Workflow
 
 Usage from CLI (astra shadow)
 ──────────────────────────────
-    python -m Asearch.shadow_coding.recorder --url https://... --out sessions/
+    python -m Prism_view.shadow_coding.recorder --url https://... --out sessions/
 
 How codegen is invoked
 ──────────────────────
@@ -50,7 +50,7 @@ class ShadowSession:
 class ShadowRecorder:
     """Launch playwright codegen and capture the raw output file."""
 
-    def __init__(self, output_dir: str | Path = "Asearch/shadow_coding/sessions") -> None:
+    def __init__(self, output_dir: str | Path = "Prism_view/shadow_coding/sessions") -> None:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self._proc: Optional[subprocess.Popen] = None
@@ -142,7 +142,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="ASTRA Shadow Coding — interactive recorder")
     parser.add_argument("--url", required=True, help="Starting URL for codegen")
-    parser.add_argument("--out", default="Asearch/shadow_coding/sessions", help="Output directory")
+    parser.add_argument("--out", default="Prism_view/shadow_coding/sessions", help="Output directory")
     args = parser.parse_args()
 
     rec = ShadowRecorder(output_dir=args.out)

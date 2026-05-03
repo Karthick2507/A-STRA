@@ -88,7 +88,7 @@ def cmd_e2e(args: argparse.Namespace) -> int:
 
 
 def cmd_shadow(args: argparse.Namespace) -> int:
-    from Asearch.shadow_coding import ShadowRecorder, CodeEnhancer
+    from Prism_view.shadow_coding import ShadowRecorder, CodeEnhancer
 
     rec = ShadowRecorder(output_dir=Config.shadow_session_dir)
     sess = rec.start(url=args.url)
@@ -106,7 +106,7 @@ def cmd_shadow(args: argparse.Namespace) -> int:
 
 
 def cmd_train(args: argparse.Namespace) -> int:
-    from Asearch.self_healing.ml import HealerTrainer
+    from Prism_view.self_healing.ml import HealerTrainer
     trainer = HealerTrainer()
     try:
         result = trainer.train(min_samples=args.min_samples)
@@ -121,7 +121,7 @@ def cmd_train(args: argparse.Namespace) -> int:
 
 
 def cmd_registry(args: argparse.Namespace) -> int:
-    from Asearch.self_healing import LocatorRegistry
+    from Prism_view.self_healing import LocatorRegistry
     reg = LocatorRegistry(Config.locator_registry_path)
     stats = reg.stats()
     print(f"Locator registry @ {Config.locator_registry_path}")
