@@ -94,6 +94,11 @@ class Config:
     shadow_session_dir:        str        = "Prism_view/shadow_coding/sessions"
     shadow_auto_assertions:    bool       = True
     shadow_checkpoints:        List[str]  = field(default_factory=list)
+    slate_file:                str        = "Prism_view/shadow_coding/corporate_slate.py"
+    slate_language:            str        = "python"
+    style_profile_path:        str        = "Prism_view/shadow_coding/style_profile.json"
+    train_classifier_on_learn: bool       = True
+    slates:                    Dict[str, Dict[str, str]] = field(default_factory=dict)
 
     # Reporting
     report_tool:               str   = "allure"
@@ -221,6 +226,11 @@ def load_config() -> Config:
     cfg.shadow_session_dir     = s.get("session_dir", cfg.shadow_session_dir)
     cfg.shadow_auto_assertions = bool(s.get("auto_assertions", True))
     cfg.shadow_checkpoints     = list(s.get("assertion_checkpoints", []))
+    cfg.slate_file             = s.get("slate_file",             cfg.slate_file)
+    cfg.slate_language         = s.get("slate_language",         cfg.slate_language)
+    cfg.style_profile_path     = s.get("style_profile_path",     cfg.style_profile_path)
+    cfg.train_classifier_on_learn = bool(s.get("train_classifier_on_learn", True))
+    cfg.slates                 = dict(s.get("slates", {}))
 
     # Reporting
     rep = raw.get("reporting", {})
