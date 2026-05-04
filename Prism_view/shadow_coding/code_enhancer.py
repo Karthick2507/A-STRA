@@ -69,6 +69,28 @@ def _role_profile(role: str) -> Dict:
     return _PROFILE.get("by_role", {}).get(role) or _PROFILE
 
 
+_EXT_BY_LANG: Dict[str, str] = {
+    "python":     ".py",
+    "typescript": ".ts",
+    "javascript": ".js",
+    "java":       ".java",
+}
+
+
+def _lang_for(role: str) -> str:
+    """Return the source language for a role's slate, defaulting to python."""
+    prof = _PROFILE.get("by_role", {}).get(role)
+    if isinstance(prof, dict):
+        lang = prof.get("source", {}).get("language")
+        if lang:
+            return lang
+    return _PROFILE.get("source", {}).get("language", "python")
+
+
+def _ext_for(lang: str) -> str:
+    return _EXT_BY_LANG.get(lang, ".py")
+
+
 # ── Regex patterns ─────────────────────────────────────────────────────────────
 
 _GOTO    = re.compile(r'page\.goto\(["\'](.+?)["\']\)')
@@ -619,6 +641,149 @@ class BasePage:
 '''
 
 
+# ── Multi-language generators (role + language gated) ────────────────────────
+
+_ROLE_FROM_PY = re.compile(r'self\.page\.get_by_role\("(\w+)"')
+
+
+def _ts_role_for(locator_code: str) -> str:
+    m = _ROLE_FROM_PY.search(locator_code)
+    return m.group(1) if m else "textbox"
+
+
+def _gen_ui_ts(s: _Script) -> str:
+    """TypeScript variant of {entity}_UI — emitted when ui_action slate is TS/JS."""
+    cls = s.entity_plural
+    nav = s.nav_key
+
+    fills = []
+    for f in s.form_fields:
+        role = _ts_role_for(f.locator_code)
+        fills.append(
+            f'      await this.page.getByRole("{role}", '
+            f'{{ name: "{f.key}" }}).fill(item.{f.key});'
+        )
+    fill_lines = "\n".join(fills) or '      // TODO: add field fills'
+
+    return f'''import {{ Page }} from "@playwright/test";
+import {{ BasePage }} from "./Base_page";
+
+export interface {s.entity_name}Item {{
+{chr(10).join(f"  {f.key}: string;" for f in s.form_fields) or "  [key: string]: string;"}
+}}
+
+export class {cls} extends BasePage {{
+  constructor(page: Page) {{ super(page); }}
+
+  async create_{nav}(items: {s.entity_name}Item[]): Promise<void> {{
+    for (const item of items) {{
+      await this.directToNetworkItems("{nav}");
+      await this.createBtnClick();
+{fill_lines}
+      await this.waitUntilPageLoaded();
+      await this.createBtnClick(true);
+    }}
+  }}
+}}
+'''
+
+
+def _gen_ui_java(s: _Script) -> str:
+    """Java variant of {entity}_UI — emitted when ui_action slate is Java."""
+    cls = s.entity_plural
+    nav = s.nav_key
+
+    fill_lines = "\n".join(
+        f'            page.getByRole(AriaRole.TEXTBOX, '
+        f'new Page.GetByRoleOptions().setName("{f.key}")).fill(item.get("{f.key}"));'
+        for f in s.form_fields
+    ) or "            // TODO: add field fills"
+
+    return f'''import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+import java.util.List;
+import java.util.Map;
+
+public class {cls} extends BasePage {{
+
+    public {cls}(Page page) {{
+        super(page);
+    }}
+
+    public void create{cls}(List<Map<String, String>> items) {{
+        for (Map<String, String> item : items) {{
+            directToNetworkItems("{nav}");
+            createBtnClick(false);
+{fill_lines}
+            waitUntilPageLoaded();
+            createBtnClick(true);
+        }}
+    }}
+}}
+'''
+
+
+def _gen_ui(s: _Script, lang: str) -> str:
+    if lang == "typescript" or lang == "javascript":
+        return _gen_ui_ts(s)
+    if lang == "java":
+        return _gen_ui_java(s)
+    return _gen_ui_py(s)
+
+
+def _gen_base_page(lang: str) -> str:
+    if lang == "typescript" or lang == "javascript":
+        return '''import { Page } from "@playwright/test";
+
+export class BasePage {
+  constructor(protected page: Page) {}
+
+  async directToNetworkItems(itemType: string): Promise<void> {
+    await this.page.getByRole("link", { name: "Network Items" }).click();
+    await this.page.getByRole("link", { name: itemType }).click();
+    await this.waitUntilPageLoaded();
+  }
+
+  async createBtnClick(waitSuccess: boolean = false): Promise<void> {
+    await this.page.getByRole("button", { name: /Create|Save/i }).click();
+    await this.waitUntilPageLoaded();
+  }
+
+  async waitUntilPageLoaded(timeout: number = 30000): Promise<void> {
+    await this.page.waitForLoadState("networkidle", { timeout });
+  }
+}
+'''
+    if lang == "java":
+        return '''import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+
+public class BasePage {
+    protected Page page;
+
+    public BasePage(Page page) {
+        this.page = page;
+    }
+
+    public void directToNetworkItems(String itemType) {
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Network Items")).click();
+        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(itemType)).click();
+        waitUntilPageLoaded();
+    }
+
+    public void createBtnClick(boolean waitSuccess) {
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(java.util.regex.Pattern.compile("Create|Save"))).click();
+        waitUntilPageLoaded();
+    }
+
+    public void waitUntilPageLoaded() {
+        page.waitForLoadState();
+    }
+}
+'''
+    return _gen_base_page_py()
+
+
 # ── Extended generators (role-gated) ──────────────────────────────────────────
 
 def _gen_locators_py(s: _Script) -> str:
@@ -762,6 +927,170 @@ class Test{cls}Api:
 '''
 
 
+# ── Extended generator dispatchers ────────────────────────────────────────────
+
+def _gen_locators_ts(s: _Script) -> str:
+    cls = s.entity_plural
+    methods = "\n\n".join(
+        f'  {re.sub(r"[^a-zA-Z0-9]", "_", f.key.lower())}() {{\n'
+        f'    return this.page.getByRole("textbox", {{ name: "{f.key}" }});\n  }}'
+        for f in s.form_fields
+    ) or "  // TODO: add locator methods"
+    return f'''import {{ Page, Locator }} from "@playwright/test";
+
+export class {cls}Locators {{
+  constructor(private page: Page) {{}}
+
+{methods}
+}}
+'''
+
+
+def _gen_locators_java(s: _Script) -> str:
+    cls = s.entity_plural
+    methods = "\n\n".join(
+        f'    public Locator {re.sub(r"[^a-zA-Z0-9]", "_", f.key.lower())}() {{\n'
+        f'        return page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("{f.key}"));\n    }}'
+        for f in s.form_fields
+    ) or "    // TODO: add locator methods"
+    return f'''import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+
+public class {cls}Locators {{
+    private Page page;
+
+    public {cls}Locators(Page page) {{
+        this.page = page;
+    }}
+
+{methods}
+}}
+'''
+
+
+def _gen_locators(s: _Script, lang: str) -> str:
+    if lang in ("typescript", "javascript"):
+        return _gen_locators_ts(s)
+    if lang == "java":
+        return _gen_locators_java(s)
+    return _gen_locators_py(s)
+
+
+def _gen_controller_ts(s: _Script) -> str:
+    cls = s.entity_plural
+    has_loc = "ui_locator" in _active_roles()
+    return f'''import {{ Page }} from "@playwright/test";
+import {{ {cls} }} from "./{cls}_UI";
+{f'import {{ {cls}Locators }} from "./{cls}_Locators";' if has_loc else ""}
+
+export class {cls}Controller {{
+  ui: {cls};
+  {f"locators: {cls}Locators;" if has_loc else ""}
+
+  constructor(private page: Page) {{
+    this.ui = new {cls}(page);
+    {f"this.locators = new {cls}Locators(page);" if has_loc else ""}
+  }}
+
+  async create(items: any[]): Promise<void> {{
+    await this.ui.create_{s.nav_key}(items);
+  }}
+}}
+'''
+
+
+def _gen_controller_java(s: _Script) -> str:
+    cls = s.entity_plural
+    has_loc = "ui_locator" in _active_roles()
+    return f'''import com.microsoft.playwright.Page;
+import java.util.List;
+import java.util.Map;
+
+public class {cls}Controller {{
+    private Page page;
+    private {cls} ui;
+    {f"private {cls}Locators locators;" if has_loc else ""}
+
+    public {cls}Controller(Page page) {{
+        this.page = page;
+        this.ui = new {cls}(page);
+        {f"this.locators = new {cls}Locators(page);" if has_loc else ""}
+    }}
+
+    public void create(List<Map<String, String>> items) {{
+        ui.create{cls}(items);
+    }}
+}}
+'''
+
+
+def _gen_controller(s: _Script, lang: str) -> str:
+    if lang in ("typescript", "javascript"):
+        return _gen_controller_ts(s)
+    if lang == "java":
+        return _gen_controller_java(s)
+    return _gen_controller_py(s)
+
+
+def _gen_api_test_ts(s: _Script) -> str:
+    cls = s.entity_plural
+    nav = s.nav_key
+    return f'''import {{ test, expect }} from "@playwright/test";
+
+const baseUrl = "{s.start_url or 'https://api.example.com'}";
+
+test.describe("{cls} API", () => {{
+  test("create {nav}", async ({{ request }}) => {{
+    const response = await request.post(`${{baseUrl}}/api/{nav}`, {{
+      data: {{ {", ".join(f'{f.key}: "{f.value}"' for f in s.form_fields[:3])} }},
+    }});
+    expect([200, 201]).toContain(response.status());
+  }});
+
+  test("get {nav}", async ({{ request }}) => {{
+    const response = await request.get(`${{baseUrl}}/api/{nav}`);
+    expect(response.status()).toBe(200);
+  }});
+}});
+'''
+
+
+def _gen_api_test_java(s: _Script) -> str:
+    cls = s.entity_plural
+    nav = s.nav_key
+    return f'''import com.microsoft.playwright.APIRequestContext;
+import com.microsoft.playwright.APIResponse;
+import com.microsoft.playwright.options.RequestOptions;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class {cls}ApiTest {{
+    private static final String BASE_URL = "{s.start_url or 'https://api.example.com'}";
+
+    @Test
+    public void testCreate{cls}() {{
+        // TODO: wire APIRequestContext and assert status 200/201
+        assertTrue(true);
+    }}
+
+    @Test
+    public void testGet{cls}() {{
+        // TODO: wire APIRequestContext and assert status 200
+        assertTrue(true);
+    }}
+}}
+'''
+
+
+def _gen_api_test(s: _Script, lang: str) -> str:
+    if lang in ("typescript", "javascript"):
+        return _gen_api_test_ts(s)
+    if lang == "java":
+        return _gen_api_test_java(s)
+    return _gen_api_test_py(s)
+
+
 # ── Public API ─────────────────────────────────────────────────────────────────
 
 class CodeEnhancer:
@@ -798,18 +1127,30 @@ class CodeEnhancer:
         script.network_name = self.network_name
         active = _active_roles()
 
+        # Per-role languages (default python when role has no by_role profile)
+        ui_lang   = _lang_for("ui_action")
+        page_lang = _lang_for("ui_page")
+
         result: Dict[str, str] = {
-            "ui":        _gen_ui_py(script),
-            "data":      _gen_data_json(script),
-            "base_page": _gen_base_page_py(),
-            "name":      script.nav_key,
+            "ui":            _gen_ui(script, ui_lang),
+            "ui_lang":       ui_lang,
+            "data":          _gen_data_json(script),
+            "base_page":     _gen_base_page(page_lang),
+            "base_page_lang": page_lang,
+            "name":          script.nav_key,
         }
         if "ui_locator" in active:
-            result["locators"] = _gen_locators_py(script)
+            lang = _lang_for("ui_locator")
+            result["locators"] = _gen_locators(script, lang)
+            result["locators_lang"] = lang
         if "controller" in active:
-            result["controller"] = _gen_controller_py(script)
+            lang = _lang_for("controller")
+            result["controller"] = _gen_controller(script, lang)
+            result["controller_lang"] = lang
         if "api_test" in active:
-            result["api_test"] = _gen_api_test_py(script)
+            lang = _lang_for("api_test")
+            result["api_test"] = _gen_api_test(script, lang)
+            result["api_test_lang"] = lang
         return result
 
     def enhance_file(
@@ -839,14 +1180,15 @@ class CodeEnhancer:
 
         result  = self.enhance(raw)
         nav_key = result["name"]
-        entity  = nav_key.capitalize()
 
         written: Dict[str, Path] = {}
 
-        # Core files
-        ui_path   = out / f"{nav_key}_UI.py"
+        # Core files — language matches each role's slate
+        ui_ext   = _ext_for(result["ui_lang"])
+        page_ext = _ext_for(result["base_page_lang"])
+        ui_path   = out / f"{nav_key}_UI{ui_ext}"
         data_path = out / f"{nav_key}_Data.json"
-        base_path = out / "Base_page.py"
+        base_path = out / f"Base_page{page_ext}"
         ui_path.write_text(result["ui"],    encoding="utf-8")
         data_path.write_text(result["data"], encoding="utf-8")
         written.update({"ui": ui_path, "data": data_path})
@@ -854,15 +1196,16 @@ class CodeEnhancer:
             base_path.write_text(result["base_page"], encoding="utf-8")
         written["base_page"] = base_path
 
-        # Extended files — use roles registry for consistent paths
+        # Extended files — filename suffix follows each role's slate language
         _ext_map = {
-            "locators":   (f"{nav_key}_Locators.py",  "ui_locator"),
-            "controller": (f"{nav_key}_Controller.py", "controller"),
-            "api_test":   (f"{nav_key}_test.py",       "api_test"),
+            "locators":   f"{nav_key}_Locators",
+            "controller": f"{nav_key}_Controller",
+            "api_test":   f"{nav_key}_test",
         }
-        for key, (filename, role) in _ext_map.items():
+        for key, stem in _ext_map.items():
             if key in result:
-                ext_path = out / filename
+                ext = _ext_for(result.get(f"{key}_lang", "python"))
+                ext_path = out / f"{stem}{ext}"
                 ext_path.write_text(result[key], encoding="utf-8")
                 written[key] = ext_path
 
