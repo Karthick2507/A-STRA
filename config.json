@@ -38,7 +38,11 @@
   "shadow_coding": {
     "session_dir": "Prism_view/shadow_coding/sessions",
     "auto_assertions": true,
-    "assertion_checkpoints": ["page_load", "click", "navigation", "popup_visible"]
+    "assertion_checkpoints": ["page_load", "click", "navigation", "popup_visible"],
+    "slate_file": "Prism_view/shadow_coding/corporate_slate.py",
+    "slate_language": "python",
+    "style_profile_path": "Prism_view/shadow_coding/style_profile.json",
+    "train_classifier_on_learn": true
   },
 
   "reporting": {

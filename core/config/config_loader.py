@@ -94,6 +94,10 @@ class Config:
     shadow_session_dir:        str        = "Prism_view/shadow_coding/sessions"
     shadow_auto_assertions:    bool       = True
     shadow_checkpoints:        List[str]  = field(default_factory=list)
+    slate_file:                str        = "Prism_view/shadow_coding/corporate_slate.py"
+    slate_language:            str        = "python"
+    style_profile_path:        str        = "Prism_view/shadow_coding/style_profile.json"
+    train_classifier_on_learn: bool       = True
 
     # Reporting
     report_tool:               str   = "allure"

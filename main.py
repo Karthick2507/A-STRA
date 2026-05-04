@@ -120,6 +120,29 @@ def cmd_train(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_learn(args: argparse.Namespace) -> int:
+    from Prism_view.shadow_coding.slate_learner import SlateLearner
+    slate  = args.slate or Config.slate_file
+    learner = SlateLearner(
+        profile_path   = Config.style_profile_path,
+        classifier_dir = "Prism_view/shadow_coding/ml",
+    )
+    try:
+        profile = learner.learn(slate, train_classifier=Config.train_classifier_on_learn)
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"Learn failed: {exc}")
+        return 1
+    print(f"Style learned from: {slate}")
+    print(f"  language : {profile.source_language}")
+    print(f"  base class: {profile.base_class}")
+    print(f"  method style: {profile.method_style}")
+    print(f"  logging: {profile.logging_call} ({profile.logging_format})")
+    print(f"  type hints: {profile.has_type_hints}")
+    print(f"  try-except: {profile.has_try_except}")
+    print(f"  profile saved → {Config.style_profile_path}")
+    return 0
+
+
 def cmd_registry(args: argparse.Namespace) -> int:
     from Prism_view.self_healing import LocatorRegistry
     reg = LocatorRegistry(Config.locator_registry_path)
@@ -175,6 +198,12 @@ def build_parser() -> argparse.ArgumentParser:
     rg = sub.add_parser("registry", parents=[_common], help="Inspect locator registry")
     rg.add_argument("--export", help="Export registry to JSON file at this path")
 
+    lrn = sub.add_parser("learn", parents=[_common],
+                         help="Learn corporate style from slate file → update style_profile.json")
+    lrn.add_argument("--slate", default=None,
+                     help="Path to corporate slate file (.py/.ts/.js/.java). "
+                          "Defaults to config slate_file.")
+
     return p
 
 
@@ -194,6 +223,7 @@ def main() -> int:
         "shadow":    cmd_shadow,
         "train":     cmd_train,
         "registry":  cmd_registry,
+        "learn":     cmd_learn,
     }
     fn = dispatch.get(args.cmd)
     if fn is None:
