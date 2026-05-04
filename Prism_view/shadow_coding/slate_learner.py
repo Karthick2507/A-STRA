@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Optional
 
 from Prism_view.shadow_coding.slate_parser import get_parser, SUPPORTED_EXTENSIONS, StyleProfile
+from Prism_view.shadow_coding.roles import ROLE_NAMES, validate_role
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +94,11 @@ class SlateLearner:
         role_profiles: dict[str, dict] = {}
 
         for role, entry in slates_config.items():
+            try:
+                validate_role(role)
+            except ValueError as exc:
+                logger.warning("Skipping unregistered role: %s", exc)
+                continue
             slate_path = Path(entry.get("file", ""))
             if not slate_path.exists():
                 logger.warning("Slate for role '%s' not found at %s — skipping.", role, slate_path)
