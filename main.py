@@ -102,6 +102,9 @@ def cmd_shadow(args: argparse.Namespace) -> int:
     print(f"Generated UI page object : {files['ui']}")
     print(f"Generated test data      : {files['data']}")
     print(f"Generated base page      : {files['base_page']}")
+    for key in ("locators", "controller", "api_test"):
+        if key in files:
+            print(f"Generated {key:<15}: {files[key]}")
     return 0
 
 
