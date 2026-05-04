@@ -122,11 +122,32 @@ def cmd_train(args: argparse.Namespace) -> int:
 
 def cmd_learn(args: argparse.Namespace) -> int:
     from Prism_view.shadow_coding.slate_learner import SlateLearner
-    slate  = args.slate or Config.slate_file
     learner = SlateLearner(
         profile_path   = Config.style_profile_path,
         classifier_dir = "Prism_view/shadow_coding/ml",
     )
+
+    # Multi-slate mode: learn all roles defined in config
+    if not args.slate and Config.slates:
+        try:
+            results = learner.learn_all(
+                Config.slates,
+                train_classifier=Config.train_classifier_on_learn,
+            )
+        except (FileNotFoundError, ValueError) as exc:
+            print(f"Learn failed: {exc}")
+            return 1
+        if not results:
+            print("No slate files found. Add slate files under the paths defined in config.json slates block.")
+            return 1
+        print(f"Style learned from {len(results)} role(s):")
+        for role, profile in results.items():
+            print(f"  [{role}] {profile.source_language} | base={profile.base_class} | method={profile.method_style}")
+        print(f"  profile saved → {Config.style_profile_path}")
+        return 0
+
+    # Single-slate mode (legacy): --slate <path> or config.slate_file
+    slate = args.slate or Config.slate_file
     try:
         profile = learner.learn(slate, train_classifier=Config.train_classifier_on_learn)
     except (FileNotFoundError, ValueError) as exc:

@@ -42,7 +42,15 @@
     "slate_file": "Prism_view/shadow_coding/corporate_slate.py",
     "slate_language": "python",
     "style_profile_path": "Prism_view/shadow_coding/style_profile.json",
-    "train_classifier_on_learn": true
+    "train_classifier_on_learn": true,
+    "slates": {
+      "ui_action":   { "file": "Prism_view/shadow_coding/slates/ui_action.py",   "language": "python" },
+      "ui_locator":  { "file": "Prism_view/shadow_coding/slates/ui_locator.py",  "language": "python" },
+      "ui_page":     { "file": "Prism_view/shadow_coding/slates/ui_page.py",     "language": "python" },
+      "api_test":    { "file": "Prism_view/shadow_coding/slates/api_test.py",    "language": "python" },
+      "data_verify": { "file": "Prism_view/shadow_coding/slates/data_verify.py", "language": "python" },
+      "controller":  { "file": "Prism_view/shadow_coding/slates/controller.py",  "language": "python" }
+    }
   },
 
   "reporting": {

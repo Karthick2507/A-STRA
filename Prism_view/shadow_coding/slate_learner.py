@@ -75,6 +75,55 @@ class SlateLearner:
 
         return profile
 
+    def learn_all(
+        self,
+        slates_config: dict[str, dict],
+        train_classifier: bool = True,
+    ) -> dict[str, StyleProfile]:
+        """Learn style from multiple role-keyed slate files.
+
+        Args:
+            slates_config: Mapping of role → {file, language} from config.json slates block.
+            train_classifier: Whether to train block classifier per role.
+
+        Returns:
+            Dict of role → StyleProfile for each slate that was found and parsed.
+        """
+        results: dict[str, StyleProfile] = {}
+        role_profiles: dict[str, dict] = {}
+
+        for role, entry in slates_config.items():
+            slate_path = Path(entry.get("file", ""))
+            if not slate_path.exists():
+                logger.warning("Slate for role '%s' not found at %s — skipping.", role, slate_path)
+                continue
+            try:
+                profile = self.learn(slate_path, train_classifier=train_classifier)
+                results[role] = profile
+                role_profiles[role] = profile.to_dict()
+                logger.info("Learned role '%s' from %s", role, slate_path)
+            except (ValueError, OSError) as exc:
+                logger.warning("Failed to learn role '%s': %s", role, exc)
+
+        if role_profiles:
+            self._save_role_profiles(role_profiles)
+
+        return results
+
+    def _save_role_profiles(self, role_profiles: dict[str, dict]) -> None:
+        """Merge per-role profiles into the by_role section of style_profile.json."""
+        data: dict = {}
+        if self.profile_path.exists():
+            with open(self.profile_path, encoding="utf-8") as f:
+                data = json.load(f)
+        data.setdefault("by_role", {})
+        for role, profile_dict in role_profiles.items():
+            data["by_role"][role] = profile_dict
+        data["generated_at"] = datetime.now(timezone.utc).isoformat()
+        with open(self.profile_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4)
+        logger.info("by_role profiles saved → %s (roles: %s)", self.profile_path, list(role_profiles))
+
     def load_profile(self) -> dict:
         """Load the current style_profile.json, or return defaults if missing."""
         if self.profile_path.exists():

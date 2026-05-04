@@ -42,6 +42,15 @@
         "date_picker":{ "detected": false },
         "submit":     { "detected": false, "wrapper_method": "create_btn_click" }
     },
+    "by_role": {
+        "_comment": "Per-role style profiles. Populated by slate_learner.learn_all(). Keys match config.json shadow_coding.slates.",
+        "ui_action":   null,
+        "ui_locator":  null,
+        "ui_page":     null,
+        "api_test":    null,
+        "data_verify": null,
+        "controller":  null
+    },
     "ml": {
         "classifier_trained": false,
         "classifier_path": "Prism_view/shadow_coding/ml/block_classifier.onnx",
