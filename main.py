@@ -27,7 +27,7 @@ from pathlib import Path
 # Make PRISM root importable
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from core.config.config_loader import Config
+from core.config.config_loader import CONFIG as Config
 
 
 def cmd_preflight(args: argparse.Namespace) -> int:

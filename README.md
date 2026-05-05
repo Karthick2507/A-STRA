@@ -1,6 +1,6 @@
 # PRISM — Automated Testing Framework
 
-**P**laywright-powered **R**ecord, **I**ntelligent **S**elf-healing & **M**ulti-language automation framework.
+**P**laywright-powered **R**ecord, **I**ntelligent **S**elf-healing & **M**ulti-language & **ML**-based automation framework.
 
 PRISM does three big things for your team:
 
