@@ -64,6 +64,23 @@ reg = LocatorRegistry("Data/locators/locator_registry.db")
 stats = reg.stats()  # → {"total": 142, "active": 138, "healed_in_last_7d": 4, ...}
 ```
 
+### Learn corporate style by scanning your framework
+```python
+from prism import FolderScanner
+from Prism_view.shadow_coding.slate_learner import SlateLearner
+
+scanner = FolderScanner("./your_corporate_framework")
+result  = scanner.scan()
+
+print(f"Found {result.total_files_scanned} files in {result.languages_found}")
+for role, assignment in result.assignments.items():
+    print(f"  {role:15s} [{assignment.confidence_level}]  "
+          f"{len(assignment.files)} file(s)")
+
+# Persist to style_profile.json (used by ShadowCoder during generation)
+SlateLearner().learn_from_scan(result)
+```
+
 ---
 
 ## 2. CLI / Subprocess Mode (any language)
@@ -104,8 +121,9 @@ function recordSession(url: string): void {
 ### From a shell script / Bash
 ```bash
 prism preflight
+prism learn --scan ./my_corporate_framework      # interactive review
+prism learn --scan ./my_corporate_framework -y   # CI / non-interactive
 prism shadow --url https://yourapp.stg.com
-prism learn --scan ./my_corporate_framework        # Batch 4
 prism train
 prism registry --export ./locator_dump.json
 ```
@@ -204,9 +222,9 @@ def safe_click(page, locator):
             raise
 ```
 
-### B. pytest plugin (automatic — Batch 5)
-A `pytest-prism` entry point will be added in Batch 5 so healing fires
-automatically without any host-side code changes.
+### B. pytest plugin (automatic)
+A `pytest-prism` entry point that fires healing on every locator failure is
+on the roadmap — for now use the manual integration above.
 
 ---
 
