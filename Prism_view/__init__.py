@@ -32,6 +32,11 @@ from Prism_view.self_healing import (
     HealResult,
     HealingConfig,
 )
+from Prism_view.shadow_coding.scanner import (
+    ScannedFile,
+    RoleAssignment,
+    ScanResult,
+)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # High-level plugin API — what most consumers should use
@@ -110,18 +115,27 @@ class SelfHealer:
 class FolderScanner:
     """Scan a corporate framework folder to learn its style (Option C).
 
-    Implementation lands in Batch 3. This is a placeholder so plugin consumers
-    can already see the public surface.
+    Args:
+        root: Directory to scan.
+        ignore_dirs: Extra directory names to skip (on top of defaults like node_modules).
+        max_depth: Maximum recursion depth (None = unlimited).
     """
 
-    def __init__(self, root: str | Path) -> None:
-        self._root = Path(root)
+    def __init__(
+        self,
+        root: str | Path,
+        ignore_dirs=None,
+        max_depth=None,
+    ) -> None:
+        from Prism_view.shadow_coding.scanner import FolderScanner as _FS
+        self._scanner = _FS(root=root, ignore_dirs=ignore_dirs, max_depth=max_depth)
 
     def scan(self):
-        raise NotImplementedError(
-            "FolderScanner is implemented in Batch 3. "
-            "For now run: python main.py learn --scan <folder> (also pending Batch 4)."
-        )
+        """Walk *root* and classify every supported file by PRISM role.
+
+        Returns a ScanResult with per-role assignments and confidence levels.
+        """
+        return self._scanner.scan()
 
 
 __all__ = [
@@ -141,4 +155,8 @@ __all__ = [
     "ROLES",
     "ROLE_NAMES",
     "output_path_for",
+    # Scanner
+    "ScannedFile",
+    "RoleAssignment",
+    "ScanResult",
 ]
