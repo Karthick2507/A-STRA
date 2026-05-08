@@ -66,3 +66,11 @@ dist/
 *.js
 *.d.ts
 *.js.map
+
+# PRISM runtime artifacts (auto-created at runtime)
+Data/locators/*.db
+Data/locators/training_data.jsonl
+Prism_view/shadow_coding/ml/*.pkl
+Prism_view/shadow_coding/ml/*.onnx
+Prism_view/self_healing/ml/models/*.pkl
+Prism_view/self_healing/ml/models/*.onnx
