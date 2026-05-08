@@ -79,19 +79,6 @@ def _ask_yes_no(prompt: str, default: str = "y") -> bool:
     return ans in ("y", "yes")
 
 
-def _pick_role(current_suggestion: str) -> str:
-    print()
-    print("  Map to PRISM role:")
-    for i, role in enumerate(_VALID_ROLES, 1):
-        marker = " ← recommended" if role == current_suggestion else ""
-        print(f"    {i}. {role:<16} {_ROLE_DESCRIPTIONS[role]}{marker}")
-    while True:
-        ans = _ask(f"  Role number", str(_VALID_ROLES.index(current_suggestion) + 1))
-        if ans.isdigit() and 1 <= int(ans) <= len(_VALID_ROLES):
-            return _VALID_ROLES[int(ans) - 1]
-        print("  Invalid. Enter a number from the list.")
-
-
 def _pick_files(
     all_files: List[Path],
     role: str,
@@ -187,33 +174,29 @@ def review_scan(result: ScanResult, *, non_interactive: bool = False) -> ScanRes
 
     for i, label in enumerate(hierarchy, 1):
         print()
-        print(f"  ── [{i}/{len(hierarchy)}] File type: {label} ──")
-
         suggested_role = _suggest_role(label)
-        chosen_role = _pick_role(suggested_role)
+        print(f"  ── [{i}/{len(hierarchy)}] File type: {label}  →  role: {suggested_role} ──")
 
-        chosen_paths = _pick_files(all_files, chosen_role, label)
+        chosen_paths = _pick_files(all_files, suggested_role, label)
         if not chosen_paths:
             print(f"  Skipped — no files assigned for '{label}'.")
             continue
 
-        lang = _detect_lang(chosen_paths)
-
-        if chosen_role not in new_assignments:
-            new_assignments[chosen_role] = RoleAssignment(role=chosen_role)
+        if suggested_role not in new_assignments:
+            new_assignments[suggested_role] = RoleAssignment(role=suggested_role)
 
         for path in chosen_paths:
             file_lang = _EXT_LANG.get(path.suffix.lower(), "python")
-            new_assignments[chosen_role].files.append(
+            new_assignments[suggested_role].files.append(
                 ScannedFile(
                     path=path,
                     language=file_lang,
-                    role=chosen_role,
+                    role=suggested_role,
                     confidence=0.95,
                     signals=[f"user-selected for '{label}'"],
                 )
             )
-        print(f"  ✓ {len(chosen_paths)} file(s) → {chosen_role}")
+        print(f"  ✓ {len(chosen_paths)} file(s) → {suggested_role}")
 
     # ── Rebuild result ─────────────────────────────────────────────────────
     all_langs = sorted({
