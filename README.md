@@ -6,7 +6,7 @@ PRISM does three big things for your team:
 
 1. **Records your clicks in a browser** and turns them into clean, reusable test code automatically *(Shadow Coding)*
 2. **Fixes broken selectors by itself** when the app UI changes — no manual test maintenance *(Self-Healing)*
-3. **Learns your company's coding style** and generates files that look like your team wrote them *(Corporate Slate)*
+3. **Learns your company's coding style** by scanning your existing framework folder and generates files that look like your team wrote them *(Folder Scan)*
 
 > Think of it like a smart assistant that watches you use a website, writes the test code for you in your team's style, and then keeps fixing the code whenever the website changes.
 
@@ -19,7 +19,7 @@ PRISM does three big things for your team:
 3. [Install in 5 Minutes](#3-install-in-5-minutes)
 4. [Configuration](#4-configuration)
 5. [Shadow Coding — Record to Code](#5-shadow-coding--record-to-code)
-6. [Corporate Style (Slate System)](#6-corporate-style-slate-system)
+6. [Corporate Style (Folder Scan)](#6-corporate-style-folder-scan)
 7. [Self-Healing Locators](#7-self-healing-locators)
 8. [Running Tests](#8-running-tests)
 9. [CLI Cheat Sheet](#9-cli-cheat-sheet)
@@ -34,8 +34,10 @@ You (developer)
      │
      │  Step 1 — teach PRISM your coding style
      ▼
- python main.py learn          ← reads your corporate slate files
-     │                            writes  style_profile.json
+ python main.py learn --scan ./your_corporate_framework
+     │                            scans every .py/.ts/.js/.java/data file,
+     │                            classifies each into a PRISM role, and writes
+     │                            style_profile.json
      │
      │  Step 2 — record a user session
      ▼
@@ -112,23 +114,22 @@ PRISM/
 │       ├── recorder.py            ← wraps playwright codegen
 │       ├── code_enhancer.py       ← turns raw recording into corporate POM files
 │       ├── roles.py               ← role registry (single source of truth)
-│       ├── slate_learner.py       ← reads slate files, writes style_profile.json
+│       ├── prism_config.json      ← plugin-mode config home
 │       ├── style_profile.json     ← learned corporate style (auto-updated)
-│       ├── corporate_slate.py     ← legacy single-file slate (still supported)
+│       ├── slate_learner.py       ← persists scan results into style_profile.json
 │       │
-│       ├── slate_parser/          ← reads Python / TypeScript / Java slate files
-│       │   ├── base_parser.py
-│       │   ├── python_parser.py
-│       │   ├── typescript_parser.py
-│       │   └── java_parser.py
+│       ├── scanner/               ← Folder Scan engine (replaces slates/)
+│       │   ├── folder_scanner.py  ← recursive directory walker
+│       │   ├── file_classifier.py ← regex + AST per-file role classifier
+│       │   ├── scan_result.py     ← ScannedFile / RoleAssignment / ScanResult
+│       │   ├── scan_report.py     ← formatted summary tables
+│       │   └── interactive_cli.py ← Y/N/R/S review prompts
 │       │
-│       └── slates/                ← YOUR corporate code templates go here
-│           ├── ui_action.py       ← template for page action methods
-│           ├── ui_locator.py      ← template for locator definitions
-│           ├── ui_page.py         ← template for base page class
-│           ├── api_test.py        ← template for API tests
-│           ├── data_verify.py     ← template for data verification helpers
-│           └── controller.py      ← template for test controllers
+│       └── slate_parser/          ← reads Python / TypeScript / Java source
+│           ├── base_parser.py
+│           ├── python_parser.py
+│           ├── typescript_parser.py
+│           └── java_parser.py
 │
 ├── UI/
 │   ├── pages/                     ← hand-written page objects
@@ -190,25 +191,33 @@ If preflight prints `Preflight OK.` you are good to go.
 
 ## 4. Configuration
 
-### config.json — non-secret settings
+### prism_config.json — non-secret settings
 
-This file is committed to the repo. It controls browser settings, timeouts,
-healing thresholds, and the list of your corporate slate files.
+PRISM looks for its config in this order:
+
+1. `$PRISM_CONFIG` environment variable (explicit path) — highest priority
+2. `Prism_view/shadow_coding/prism_config.json` — plugin-mode default
+3. `config.json` at project root — legacy fallback
+
+The config file controls browser settings, timeouts, healing thresholds, and
+session output paths. **Corporate style is no longer configured here** — it
+is learned automatically by `prism learn --scan` (see [Section 6](#6-corporate-style-folder-scan)).
 
 ```json
 {
   "default_env": "stg",
   "environments": {
-    "stg":  { "base_url": "https://yourapp.stg.com", "api_url": "https://yourapp.stg.com/api" },
-    "prod": { "base_url": "https://yourapp.com",     "api_url": "https://yourapp.com/api" }
+    "stg":  { "base_url": "https://yourapp.stg.com" },
+    "prod": { "base_url": "https://yourapp.com" }
   },
   "browser": { "default": "chromium", "headless": false },
+  "self_healing": {
+    "enabled": true,
+    "min_confidence": 0.75
+  },
   "shadow_coding": {
-    "slates": {
-      "ui_action":  { "file": "Prism_view/shadow_coding/slates/ui_action.py",  "language": "python" },
-      "ui_locator": { "file": "Prism_view/shadow_coding/slates/ui_locator.py", "language": "python" },
-      "ui_page":    { "file": "Prism_view/shadow_coding/slates/ui_page.py",    "language": "python" }
-    }
+    "session_dir": "Prism_view/shadow_coding/sessions",
+    "auto_assertions": true
   }
 }
 ```
@@ -263,9 +272,9 @@ Raw codegen output: Prism_view/shadow_coding/sessions/20240504-143210/raw.py
 Generated UI page object : sessions/20240504-143210/videos_UI.py
 Generated test data      : sessions/20240504-143210/videos_Data.json
 Generated base page      : sessions/20240504-143210/Base_page.py
-Generated locators       : sessions/20240504-143210/videos_Locators.py    ← if ui_locator slate exists
-Generated controller     : sessions/20240504-143210/videos_Controller.py  ← if controller slate exists
-Generated api_test       : sessions/20240504-143210/videos_test.py        ← if api_test slate exists
+Generated locators       : sessions/20240504-143210/videos_Locators.py    ← if ui_locator role detected
+Generated controller     : sessions/20240504-143210/videos_Controller.py  ← if controller role detected
+Generated api_test       : sessions/20240504-143210/videos_test.py        ← if api_test role detected
 ```
 
 ### What does each generated file do?
@@ -306,119 +315,153 @@ playwright codegen (raw Python)
 
 ---
 
-## 6. Corporate Style (Slate System)
+## 6. Corporate Style (Folder Scan)
 
 ### The problem
 
-Out of the box, PRISM generates code that looks like PRISM's default style.
-But your company probably has its own coding conventions — a specific base class,
-logging pattern, import order, maybe TypeScript instead of Python.
+Out of the box, PRISM generates code in PRISM's default style. But your team
+already has conventions — a specific base class, logging pattern, naming
+scheme, maybe TypeScript or Java instead of Python.
 
-### The solution — Slate files
+### The solution — point PRISM at your existing framework
 
-A **slate** is simply a real file from your corporate codebase that PRISM reads,
-learns from, and uses as the pattern for future generated files.
+Instead of asking you to hand-craft "slate" files, PRISM **scans your real
+test framework folder**, classifies each file into one of six roles, and
+learns the style automatically.
 
-There is one slate per **role** (type of file). Six roles are supported:
+```bash
+prism learn --scan /path/to/your_corporate_framework
+```
 
-| Role key | Slate file | Drives generation of |
-|----------|-----------|----------------------|
-| `ui_action` | `slates/ui_action.py` | `{entity}_UI.py` — page actions |
-| `ui_locator` | `slates/ui_locator.py` | `{entity}_Locators.py` — element selectors |
-| `ui_page` | `slates/ui_page.py` | `Base_page.py` — base page class |
-| `api_test` | `slates/api_test.py` | `{entity}_test.py` — API tests |
-| `data_verify` | `slates/data_verify.py` | `{entity}_Data.json` helpers |
-| `controller` | `slates/controller.py` | `{entity}_Controller.py` — orchestrator |
+### The six roles PRISM looks for
 
-### Supported languages per role
+| Role key | What PRISM looks for | Drives generation of |
+|----------|----------------------|----------------------|
+| `ui_page` | Base classes, shared helpers (`extends`, no `@Test`/`def test_`) | `Base_page.{py,ts,java}` |
+| `ui_action` | Files calling `.click()`, `.fill()`, `page.goto(...)` | `{entity}_UI.{py,ts,java}` |
+| `ui_locator` | Static selector constants (`By.`, `data-testid`, `getByRole`) | `{entity}_Locators.{py,ts,java}` |
+| `api_test` | `@pytest.mark`, `@Test`, `def test_…`, REST clients | `{entity}_test.{py,ts,java}` |
+| `data_verify` | Data builders, parametrize fixtures, `.xlsx`/`.json`/`.yaml`/`.docx`/`.pptx` | `{entity}_Data.json` |
+| `controller` | Files importing multiple page objects, fixtures, `@BeforeClass` | `{entity}_Controller.{py,ts,java}` |
 
-Each role's slate (and therefore its output file) can be in a different language:
+### Supported languages
 
-| Language | Slate extension | Output extension |
-|----------|----------------|------------------|
+PRISM handles **mixed-language** projects. Each role is detected independently —
+your `ui_page` can be Java while `ui_action` is TypeScript and `api_test` is
+Python. The generated file picks up the same language as the role's source.
+
+| Language | Source extensions read | Output extension |
+|----------|------------------------|------------------|
 | Python | `.py` | `.py` |
 | TypeScript | `.ts` | `.ts` |
 | JavaScript | `.js` | `.js` |
 | Java | `.java` | `.java` |
+| Data | `.xlsx` `.pptx` `.docx` `.yaml` `.json` | classified as `data_verify` |
 
-Roles are **independent** — `ui_locator` can be TypeScript while `api_test` is Java
-and `ui_action` is Python. PRISM handles each role separately.
+### How the scan works
 
-### How to teach PRISM your corporate style
+1. **Walk** the folder you point at — skips `.git`, `node_modules`,
+   `__pycache__`, `vendor`, `target`, `build`, `.venv` automatically.
+2. **Classify** every supported file into one of the six roles using
+   regex signals + Python AST inspection. Each assignment gets a confidence:
+   - **HIGH**  ≥ 0.85 → auto-accepted
+   - **MEDIUM** 0.70–0.84 → auto-accepted, you can drop in review
+   - **LOW**   < 0.70 → PRISM **asks you** per file
+3. **Review** — PRISM shows a summary table and prompts:
+   - `[Y]` accept   `[N]` drop   `[R]` reassign to another role   `[S]` skip
+4. **Learn** — PRISM picks the highest-confidence file per role as the
+   representative slate, parses it, and writes role-keyed style data into
+   `Prism_view/shadow_coding/style_profile.json`.
 
-#### 1. Drop your real corporate files into the slates folder
-
-```
-Prism_view/shadow_coding/slates/
-├── ui_action.py     ← copy a real page object from your codebase
-├── ui_locator.py    ← copy a real locator file
-├── ui_page.py       ← copy your BasePage class
-└── controller.py    ← copy a real controller/fixture file
-```
-
-The placeholder files already in those paths are just examples — replace them
-with your real code. PRISM only reads the **style** (imports, class names, logging
-calls, type hints) — it does not copy the actual test logic.
-
-#### 2. If your team uses TypeScript, update config.json
-
-```json
-"slates": {
-  "ui_action":  { "file": "Prism_view/shadow_coding/slates/ui_action.ts",  "language": "typescript" },
-  "ui_locator": { "file": "Prism_view/shadow_coding/slates/ui_locator.ts", "language": "typescript" }
-}
-```
-
-#### 3. Run the learn command
+### Walkthrough
 
 ```bash
-python main.py learn
+prism learn --scan ./acme_test_framework
 ```
 
-PRISM will:
-- Parse each slate file that exists
-- Extract the style (imports, base class, logging, type hints, naming, Playwright API)
-- Save everything to `style_profile.json`
-- Train the block classifier (ML model that recognises login / form-fill / navigation blocks)
-
-Sample output:
-
 ```
-Style learned from 4 role(s):
-  [ui_action]  python     | base=BasePage | method=snake_case
-  [ui_locator] typescript | base=—        | method=camelCase
-  [ui_page]    python     | base=—        | method=snake_case
-  [controller] python     | base=—        | method=snake_case
-  profile saved → Prism_view/shadow_coding/style_profile.json
+──────────────────────────────────────────────────────────────────────────────
+PRISM folder scan — /home/me/acme_test_framework
+──────────────────────────────────────────────────────────────────────────────
+  Files scanned    : 87
+  Languages found  : python, typescript
+  Roles assigned   : 6
+  Unclassified     : 0
+
+  Role           Conf     Files   Examples
+  -------------- -------- ------  ----------------------------------------
+  ui_page        HIGH     2       BasePage.py, base_page.ts
+  ui_action      HIGH     14      login_page.py, dashboard.ts, … (+12)
+  ui_locator     MEDIUM   8       login_locators.py, dashboard.locators.ts
+  controller     HIGH     3       login_controller.py, … (+1)
+  api_test       HIGH     12      test_auth.py, test_users.ts, … (+10)
+  data_verify    HIGH     5       users.json, fixtures.yaml, … (+2)
+──────────────────────────────────────────────────────────────────────────────
+
+Action for 'ui_page'? [Y/n/r/s]: y
+Action for 'ui_action'? [Y/n/r/s]: y
+...
+✓ style_profile.json updated — roles: ['api_test', 'controller', 'data_verify',
+                                       'ui_action', 'ui_locator', 'ui_page']
 ```
 
-#### 4. Learn a single slate manually (optional)
+### Single-file mode
+
+If you only want to point PRISM at one specific file (instead of a whole
+folder), use `--slate`:
 
 ```bash
-python main.py learn --slate path/to/my_page.py
+prism learn --slate path/to/my_login_page.ts
 ```
 
-### What PRISM learns from a slate
+This runs the same classifier engine on that one file.
+
+### Skip the prompts (CI mode)
+
+```bash
+prism learn --scan ./acme_test_framework --yes
+```
+
+`--yes` / `-y` auto-accepts every assignment. Useful in CI pipelines where
+no human is at the keyboard.
+
+### What PRISM learns
+
+For each accepted role, PRISM extracts and stores:
 
 | What it reads | Example (Python) | Example (TypeScript) |
 |---------------|-----------------|----------------------|
 | Base class | `class MyPage(BasePage)` | `class MyPage extends BasePage` |
-| Import order | `from __future__ import annotations` first | `import { Page } from "@playwright/test"` |
-| Logging pattern | `logger.info(f"...")` | `console.log(...)` |
+| Import style | `from __future__ import annotations` first | `import { Page } from "@playwright/test"` |
+| Logging | `logger.info(f"...")` | `console.log(...)` |
 | Type hints | `def fill(self, val: str) -> None` | `async fill(val: string): Promise<void>` |
-| Playwright API | `get_by_role` vs `locator` | `getByRole` vs `locator` |
-| Docstring style | Google / NumPy / plain | JSDoc |
+| Locator API | `get_by_role` vs `locator` | `getByRole` vs `locator` |
 
-### What happens when a role's slate does NOT exist
+### What if a role isn't detected?
 
-If a slate file is missing for a role, that role is simply skipped.
+If your framework doesn't contain (say) a `controller` file, PRISM simply
+won't generate `{entity}_Controller.*` during `prism shadow`. Roles you
+don't have are silently skipped — there's no failure.
 
-- `ui_action` slate missing → `{entity}_UI.py` is generated using PRISM defaults
-- `ui_locator` slate missing → `{entity}_Locators.py` is **not generated at all**
-- `controller` slate missing → `{entity}_Controller.py` is **not generated at all**
+### What gets written
 
-This means you can start with zero slates and add them one by one as your team
-decides on conventions.
+Every successful scan updates `Prism_view/shadow_coding/style_profile.json`
+with two new top-level sections:
+
+```json
+{
+  "by_role": {
+    "ui_page":   { "source": { "language": "python", "path": "..." }, "patterns": {...} },
+    "ui_action": { "source": { "language": "typescript", "path": "..." }, "patterns": {...} }
+  },
+  "scanned_from": {
+    "root": "/home/me/acme_test_framework",
+    "files": [
+      { "role": "ui_page", "path": "...", "confidence": 0.92, "language": "python", "all_files": [...] }
+    ]
+  }
+}
+```
 
 ---
 
@@ -482,38 +525,26 @@ python main.py registry --export Data/locators/dump.json
 
 ## 8. Running Tests
 
-### UI tests
+PRISM does **not** ship its own test runner — it generates clean POM files
+that plug into your existing framework (pytest, Playwright Test, JUnit, …).
+
+### Run with your existing framework
 
 ```bash
-python main.py ui                              # all UI tests, default env + browser
-python main.py ui --env=stg --browser=firefox  # specific env and browser
-python main.py ui -m smoke                     # only tests marked @pytest.mark.smoke
-python main.py ui -n 4                         # 4 parallel workers
-```
+# Python / pytest
+pytest tests/ -n auto
 
-Or directly with pytest (same thing):
+# TypeScript / Playwright Test
+npx playwright test
 
-```bash
-pytest UI/tests -m smoke --browser=chromium -n auto
-```
-
-### API tests
-
-```bash
-python main.py api
-python main.py api -m regression -n 4
-```
-
-### UI + API together (end-to-end)
-
-```bash
-python main.py e2e --browser=chromium
+# Java / JUnit
+mvn test
 ```
 
 ### Writing a test with a generated page object
 
-After running `python main.py shadow`, copy the generated files into your test
-structure and write a test like this:
+After running `prism shadow --url ...`, copy the generated files into your
+test structure and write a test like this:
 
 ```python
 # UI/tests/test_videos.py
@@ -536,35 +567,32 @@ def test_create_video(page):
 
 ## 9. CLI Cheat Sheet
 
+After `pip install prism-fw`, the `prism` command is on your PATH. From a
+checked-out repo, replace `prism` with `python main.py`.
+
 ```bash
 # Check your install
-python main.py preflight
+prism preflight
 
-# Learn corporate style from all slate files
-python main.py learn
+# Learn corporate style by scanning a folder (interactive)
+prism learn --scan ./your_corporate_framework
 
-# Learn from a single file
-python main.py learn --slate path/to/my_page.py
+# Learn from a single file (same engine, one-file scan)
+prism learn --slate path/to/my_page.py
 
-# Record a session and generate files
-python main.py shadow --url https://yourapp.stg.com
+# Skip prompts (CI mode)
+prism learn --scan ./your_corporate_framework --yes
 
-# Run tests
-python main.py ui                              # all UI tests
-python main.py ui --env=prod --browser=firefox # choose env + browser
-python main.py ui -m smoke                     # filter by marker
-python main.py ui -n auto                      # parallel (auto workers)
-python main.py api                             # all API tests
-python main.py api -m regression -n 4          # API, filtered, parallel
-python main.py e2e --browser=chromium          # UI + API together
+# Record a session and generate POM files in your style
+prism shadow --url https://yourapp.stg.com
 
-# Train self-healing ML model
-python main.py train
-python main.py train --min-samples 50          # require more data before training
+# Train the self-healing ML model
+prism train
+prism train --min-samples 50
 
-# Inspect locator registry
-python main.py registry
-python main.py registry --export Data/locators/dump.json
+# Inspect the locator registry
+prism registry
+prism registry --export Data/locators/dump.json
 ```
 
 ---
@@ -574,28 +602,25 @@ python main.py registry --export Data/locators/dump.json
 | What it does | Library |
 |---|---|
 | Browser automation | `playwright` + `pytest-playwright` |
-| Test runner | `pytest`, `pytest-xdist` (parallel), `pytest-rerunfailures` |
-| HTTP / API testing | `httpx` |
-| WebSocket testing | `websockets` |
+| Test runner (host framework) | `pytest`, Playwright Test, JUnit, … (your choice) |
 | ML (self-healing) | `scikit-learn`, `skl2onnx`, `onnxruntime`, `numpy`, `joblib` |
+| Data file readers (Folder Scan) | `pyyaml`, `openpyxl`, `python-docx`, `python-pptx` |
 | Config / secrets | `python-dotenv` + `json` |
-| Logging | `colorlog` (custom levels: HEAL, SHADOW, API) |
-| Reporting | `allure-pytest` |
-| Notifications | `httpx` (Slack / Teams) + `smtplib` (Email) |
-| OpenAPI contracts | `pyyaml` |
+| Logging | `colorlog` |
 
 ---
 
 ## Common Questions
 
-**Q: Do I need to set up slates before I can use Shadow Coding?**
-No. PRISM works with zero slates — it uses built-in defaults. Slates only add the
-ability to match your team's specific coding conventions.
+**Q: Do I need to scan a folder before I can use Shadow Coding?**
+No. PRISM works without any scan — it falls back to built-in defaults.
+Scanning your framework only adds the ability to match your team's specific
+coding conventions.
 
 **Q: Can I mix languages? Python UI + Java API tests?**
-Yes. Each slate role is independent. Point `ui_action` at a `.py` file and
-`api_test` at a `.java` file in `config.json`. PRISM generates each output file
-in the language of its slate.
+Yes. Each role is detected independently during the folder scan. If your
+`ui_action` files are Python and your `api_test` files are Java, PRISM emits
+the corresponding generated files in those languages.
 
 **Q: What if I re-record the same entity?**
 `{entity}_UI.py` and `{entity}_Data.json` are overwritten (so your latest
