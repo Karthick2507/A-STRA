@@ -1,11 +1,10 @@
 """
 PRISM Config Loader.
 
-Standalone mode (current, Batch 1):
-    Reads `config.json` from the project root.
-
-Plugin mode (Batch 2):
-    Reads `Prism_view/shadow_coding/prism_config.json`.
+Config discovery order:
+    1. PRISM_CONFIG env var (explicit path)               — highest priority
+    2. Prism_view/shadow_coding/prism_config.json         — plugin / standard
+    3. config.json at project root                        — legacy fallback
 
 Selecting an environment:
     Set ENV via .env, CLI flag (--env=staging), or pytest --env=<name>.
@@ -25,8 +24,25 @@ from typing import Any, Dict, List
 
 _HERE = Path(__file__).resolve()
 PROJECT_ROOT = _HERE.parent.parent.parent          # …/PRISM
-CONFIG_JSON  = PROJECT_ROOT / "config.json"
-ENV_FILE     = PROJECT_ROOT / ".env"
+
+# Plugin-mode config home (primary). Standalone root config.json is a fallback
+# for legacy installs.
+PLUGIN_CONFIG = PROJECT_ROOT / "Prism_view" / "shadow_coding" / "prism_config.json"
+ROOT_CONFIG   = PROJECT_ROOT / "config.json"
+ENV_FILE      = PROJECT_ROOT / ".env"
+
+
+def _resolve_config_path() -> Path:
+    """Return path to the active config file. Plugin location wins; root is fallback.
+
+    Override by setting PRISM_CONFIG env var to an explicit path.
+    """
+    override = os.getenv("PRISM_CONFIG")
+    if override:
+        return Path(override)
+    if PLUGIN_CONFIG.exists():
+        return PLUGIN_CONFIG
+    return ROOT_CONFIG
 
 # ---------------------------------------------------------------------------
 # Dataclass
@@ -91,11 +107,15 @@ def _detect_env() -> str:
 
 
 def _load_json() -> Dict[str, Any]:
-    if not CONFIG_JSON.exists():
+    path = _resolve_config_path()
+    if not path.exists():
         raise FileNotFoundError(
-            f"config.json not found at {CONFIG_JSON}. Cannot load framework configuration."
+            f"PRISM config not found. Looked at:\n"
+            f"  {PLUGIN_CONFIG}  (plugin location)\n"
+            f"  {ROOT_CONFIG}    (standalone fallback)\n"
+            f"Set PRISM_CONFIG env var to override."
         )
-    return json.loads(CONFIG_JSON.read_text(encoding="utf-8"))
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def load_config() -> Config:

@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prism-fw"
+version = "2.0.0"
+description = "Playwright Record, Intelligent Self-healing & Multi-language ML automation framework"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+authors = [{ name = "PRISM Team" }]
+keywords = ["playwright", "automation", "self-healing", "shadow-coding", "test-generation"]
+
+dependencies = [
+    # Browser automation
+    "playwright>=1.44.0",
+    "pytest-playwright>=0.4.4",
+    "pytest>=8.2.0",
+
+    # Configuration
+    "python-dotenv>=1.0.0",
+
+    # Logging
+    "colorlog>=6.8.2",
+
+    # ML — self-healing model training & inference
+    "numpy>=1.26.0",
+    "scikit-learn>=1.4.0",
+    "joblib>=1.4.0",
+    "skl2onnx>=1.16.0",
+    "onnxruntime>=1.17.0",
+
+    # Folder scanner data-file readers (Option C — Batch 3)
+    "pyyaml>=6.0.1",
+    "openpyxl>=3.1.0",
+    "python-docx>=1.1.0",
+    "python-pptx>=0.6.23",
+]
+
+[project.scripts]
+prism = "main:main"
+
+[project.urls]
+Documentation = "https://github.com/karthick2507/prism"
+Repository = "https://github.com/karthick2507/prism"
+
+[tool.setuptools]
+py-modules = ["main", "conftest"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["Prism_view*", "core*"]
+exclude = ["Data*", "tests*"]
+
+[tool.setuptools.package-data]
+"Prism_view.shadow_coding" = ["prism_config.json", "style_profile.json"]
