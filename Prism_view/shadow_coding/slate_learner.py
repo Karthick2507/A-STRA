@@ -76,6 +76,83 @@ class SlateLearner:
 
         return profile
 
+    def learn_from_scan(self, scan_result, train_classifier: bool = True) -> dict:
+        """Convert a ScanResult into role profiles + persist to style_profile.json.
+
+        For each role, picks the highest-confidence file as the representative
+        slate for that role and parses it via the existing slate_parser.
+        Data files (.xlsx/.json/etc) are recorded as source-only entries.
+        """
+        from Prism_view.shadow_coding.slate_parser import get_parser
+
+        role_profiles: dict[str, dict] = {}
+        scanned_from = {"root": str(scan_result.root), "files": []}
+
+        for role, assignment in scan_result.assignments.items():
+            try:
+                validate_role(role)
+            except ValueError:
+                logger.warning("Skipping unknown role from scan: %s", role)
+                continue
+            if not assignment.files:
+                continue
+
+            rep = max(assignment.files, key=lambda f: f.confidence)
+            scanned_from["files"].append({
+                "role": role,
+                "path": str(rep.path),
+                "confidence": rep.confidence,
+                "language": rep.language,
+                "all_files": [str(f.path) for f in assignment.files],
+            })
+
+            if rep.language == "data":
+                role_profiles[role] = {
+                    "source": {"language": "data", "path": str(rep.path)},
+                    "patterns": {},
+                }
+                continue
+
+            parser = get_parser(rep.path)
+            if parser is None:
+                logger.warning("No parser for %s — recording source language only.", rep.path)
+                role_profiles[role] = {
+                    "source": {"language": rep.language, "path": str(rep.path)},
+                    "patterns": {},
+                }
+                continue
+
+            try:
+                source = rep.path.read_text(encoding="utf-8", errors="ignore")
+                profile = parser.parse(source, file_path=str(rep.path))
+                profile_dict = profile.to_dict()
+                profile_dict.setdefault("source", {})["language"] = rep.language
+                profile_dict["source"]["path"] = str(rep.path)
+                role_profiles[role] = profile_dict
+                logger.info("Learned role '%s' from %s (%s)", role, rep.path, rep.language)
+            except (ValueError, OSError, SyntaxError) as exc:
+                logger.warning("Failed to parse %s for role %s: %s", rep.path, role, exc)
+                role_profiles[role] = {
+                    "source": {"language": rep.language, "path": str(rep.path)},
+                    "patterns": {},
+                }
+
+        if role_profiles:
+            self._save_role_profiles(role_profiles)
+            self._save_scan_metadata(scanned_from)
+
+        return role_profiles
+
+    def _save_scan_metadata(self, scanned_from: dict) -> None:
+        data: dict = {}
+        if self.profile_path.exists():
+            with open(self.profile_path, encoding="utf-8") as f:
+                data = json.load(f)
+        data["scanned_from"] = scanned_from
+        data["generated_at"] = datetime.now(timezone.utc).isoformat()
+        with open(self.profile_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4)
+
     def learn_all(
         self,
         slates_config: dict[str, dict],

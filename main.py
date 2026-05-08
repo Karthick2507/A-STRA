@@ -91,20 +91,51 @@ def cmd_train(args: argparse.Namespace) -> int:
 
 
 def cmd_learn(args: argparse.Namespace) -> int:
-    """Learn corporate style.
+    """Learn corporate style by scanning a folder (or a single file)."""
+    from Prism_view.shadow_coding.scanner import FolderScanner
+    from Prism_view.shadow_coding.scanner.interactive_cli import review_scan
+    from Prism_view.shadow_coding.scanner.file_classifier import classify_file
+    from Prism_view.shadow_coding.scanner.scan_result import RoleAssignment, ScanResult
+    from Prism_view.shadow_coding.slate_learner import SlateLearner
+    from pathlib import Path as _P
 
-    Folder-scan engine (Option C) lands in Batch 4.
-    Until then this is a placeholder that points users at the new flow.
-    """
-    if args.scan or args.slate:
-        print("Folder scanner not implemented yet — coming in Batch 4.")
-        print(f"  --scan target:  {args.scan or '(none)'}")
-        print(f"  --slate target: {args.slate or '(none)'}")
+    if not args.scan and not args.slate:
+        print("Usage:")
+        print("  prism learn --scan /path/to/your/framework")
+        print("  prism learn --slate /path/to/single/file.py")
         return 1
-    print("Usage:")
-    print("  python main.py learn --scan /path/to/your/framework")
-    print("  python main.py learn --slate /path/to/single/file.py")
-    return 1
+
+    if args.scan:
+        target = _P(args.scan)
+        if not target.is_dir():
+            print(f"--scan target is not a directory: {target}")
+            return 1
+        result = FolderScanner(target).scan()
+    else:
+        target = _P(args.slate)
+        if not target.is_file():
+            print(f"--slate target is not a file: {target}")
+            return 1
+        scanned = classify_file(target)
+        if scanned is None:
+            print(f"Unsupported file type: {target.suffix}")
+            return 1
+        result = ScanResult(root=target.parent, total_files_scanned=1)
+        result.assignments[scanned.role] = RoleAssignment(role=scanned.role, files=[scanned])
+        result.languages_found = [scanned.language] if scanned.language != "data" else []
+
+    result = review_scan(result, non_interactive=args.yes)
+
+    if not result.assignments:
+        print("No roles to learn — aborting.")
+        return 1
+
+    learner = SlateLearner()
+    role_profiles = learner.learn_from_scan(
+        result, train_classifier=Config.train_classifier_on_learn
+    )
+    print(f"\n✓ style_profile.json updated — roles: {sorted(role_profiles)}")
+    return 0
 
 
 def cmd_registry(args: argparse.Namespace) -> int:
@@ -149,6 +180,8 @@ def build_parser() -> argparse.ArgumentParser:
     lrn = sub.add_parser("learn", parents=[_common], help="Learn corporate style from a folder or single file")
     lrn.add_argument("--scan",  default=None, help="Path to your framework folder (recursive scan).")
     lrn.add_argument("--slate", default=None, help="Path to a single file (treated as a 1-file scan).")
+    lrn.add_argument("--yes", "-y", action="store_true",
+                     help="Non-interactive: auto-accept all role assignments.")
 
     return p
 
