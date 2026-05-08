@@ -1,5 +1,5 @@
 {
-  "_comment": "Non-secret defaults. Secrets live in .env. Override via --env=staging|prod|dev.",
+  "_comment": "PRISM standalone defaults. Plugin mode reads Prism_view/shadow_coding/prism_config.json (Batch 2). Secrets live in .env.",
 
   "framework": {
     "name": "PRISM",
@@ -11,8 +11,7 @@
     "supported": ["chromium", "firefox", "webkit"],
     "headless": false,
     "slow_mo_ms": 0,
-    "viewport": { "width": 1280, "height": 720 },
-    "ignore_https_errors": true
+    "viewport": { "width": 1280, "height": 720 }
   },
 
   "timeouts": {
@@ -21,57 +20,28 @@
     "expect_ms": 10000
   },
 
-  "retry": {
-    "max_attempts": 3,
-    "backoff_seconds": [2, 4, 8]
-  },
-
   "self_healing": {
     "enabled": true,
     "auto_apply_silent": true,
     "min_confidence": 0.75,
     "registry_path": "Data/locators/locator_registry.db",
     "model_path": "Prism_view/self_healing/ml/models/healer_model.onnx",
-    "sklearn_model_path": "Prism_view/self_healing/ml/models/healer_model.pkl"
+    "sklearn_path": "Prism_view/self_healing/ml/models/healer_model.pkl"
   },
 
   "shadow_coding": {
     "session_dir": "Prism_view/shadow_coding/sessions",
     "auto_assertions": true,
     "assertion_checkpoints": ["page_load", "click", "navigation", "popup_visible"],
-    "slate_file": "Prism_view/shadow_coding/corporate_slate.py",
-    "slate_language": "python",
     "style_profile_path": "Prism_view/shadow_coding/style_profile.json",
-    "train_classifier_on_learn": true,
-    "slates": {
-      "ui_action":   { "file": "Prism_view/shadow_coding/slates/ui_action.py",   "language": "python" },
-      "ui_locator":  { "file": "Prism_view/shadow_coding/slates/ui_locator.py",  "language": "python" },
-      "ui_page":     { "file": "Prism_view/shadow_coding/slates/ui_page.py",     "language": "python" },
-      "api_test":    { "file": "Prism_view/shadow_coding/slates/api_test.py",    "language": "python" },
-      "data_verify": { "file": "Prism_view/shadow_coding/slates/data_verify.py", "language": "python" },
-      "controller":  { "file": "Prism_view/shadow_coding/slates/controller.py",  "language": "python" }
-    }
-  },
-
-  "reporting": {
-    "tool": "allure",
-    "results_dir": "reports/allure-results",
-    "attach_screenshots_on_failure": true,
-    "attach_traces_on_failure": true,
-    "attach_videos_on_failure": false
-  },
-
-  "notifications": {
-    "enabled": true,
-    "send_on": "every_run",
-    "channels": ["slack", "teams", "email"]
+    "train_classifier_on_learn": true
   },
 
   "environments": {
-    "mod":     { "base_url": "https://mrm.stg.freewheel.tv/",     "api_url": "https://mrm.stg.freewheel.tv/" },
-    "stg": { "base_url": "https://mrm.stg.freewheel.tv/", "api_url": "https://mrm.stg.freewheel.tv/" },
-    "prod":    { "base_url": "https://prod.example.com",    "api_url": "https://prod.example.com/api" }
+    "dev":  { "base_url": "" },
+    "stg":  { "base_url": "" },
+    "prod": { "base_url": "" }
   },
 
-  "default_env": "stg"
+  "default_env": "dev"
 }

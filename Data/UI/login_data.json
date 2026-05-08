@@ -1,7 +1,0 @@
-{
-  "email":    "testuser@example.com",
-  "password": "Test@1234",
-  "remember": true,
-  "invalid_email":    "not-an-email",
-  "invalid_password": "wrong"
-}
