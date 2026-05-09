@@ -635,6 +635,31 @@ running locally on CPU only. No cloud, no GPU, no API calls.
 In a `.env` file in the project root. This file must **never** be committed to
 version control. It is already in `.gitignore`.
 
----
 
+**To add a new role to PRISM, you'd need to modify these files:**
+
+| File | What to change |
+|---|---|
+| Prism_view/shadow_coding/roles.py | Add the new role to the ROLES dict with RoleSpec (name, description, output_template, output_dir, is_singleton) |
+| Prism_view/shadow_coding/scanner/interactive_cli.py | Add to _VALID_ROLES list and _ROLE_DESCRIPTIONS dict; add keywords to _KEYWORDS for auto-suggestion |
+| Prism_view/shadow_coding/scanner/file_classifier.py | Add regex/AST signal patterns for the new role in _CLASSIFIER_PATTERNS (per language: Python, TypeScript, JavaScript, Java) |
+| Prism_view/shadow_coding/code_enhancer.py | Add a generator function _gen_<role_name>() to emit the output file; wire it in enhance_file() dispatch |
+| Prism_view/shadow_coding/slate_parser/ | If the role needs style extraction (imports, base class, type hints), add a parser method for that role |
+| Prism_view/shadow_coding/scanner/scan_report.py | Add the new role to the summary table (line in format_report())|
+| README.md | Update Section 6 (The six roles) and the role table to include the new role|
+| PLUGIN_GUIDE.md | Update role references in examples|
+| PLUGIN_GUIDE.md | Update role references in examples|
+
+	
+**inimal quickstart (if you just want to scaffold):**
+
+
+1) roles.py — add RoleSpec
+2) interactive_cli.py — add to lists
+3) file_classifier.py — add patterns
+4) code_enhancer.py — add generator stub
+5) scan_report.py — add to table
+6) Which would require testing the full pipeline (learn --scan → classification → generation).
+
+---
 *Internal use — not yet published.*

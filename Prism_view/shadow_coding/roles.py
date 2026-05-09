@@ -66,6 +66,12 @@ ROLES: Dict[str, RoleSpec] = {
         output_template="{entity}_Controller.py",
         output_dir="Prism_view/UI/controllers",
     ),
+    "action_class": RoleSpec(
+        name="action_class",
+        description="Test controller / orchestrator that wires page objects + fixtures.",
+        output_template="{entity}_action_class.py",
+        output_dir="Prism_view/UI/action",
+    ),
 }
 
 

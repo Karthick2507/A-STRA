@@ -30,6 +30,8 @@ _VALID_ROLES = [
     "controller",
     "api_test",
     "data_verify",
+    "action_class",
+
 ]
 
 _ROLE_DESCRIPTIONS = {
@@ -39,6 +41,7 @@ _ROLE_DESCRIPTIONS = {
     "controller":  "Orchestrator that wires page objects together",
     "api_test":    "Test file (@pytest.mark / @Test / def test_…)",
     "data_verify": "Test data / fixtures (.yaml / .json / .xlsx / …)",
+    "action_class": "Act as a Main Action class for hook",
 }
 
 # ── Role auto-suggest from type label ─────────────────────────────────────────
@@ -51,6 +54,7 @@ _KEYWORDS: List[Tuple[List[str], str]] = [
     (["controller", "orchestrat", "fixture", "setup"],                 "controller"),
     (["base"],                                                         "ui_page"),
     (["page",  "ui_"],                                                 "ui_page"),
+    (["page",  "ui_action_"],                                          "ui_action_page"),
 ]
 
 

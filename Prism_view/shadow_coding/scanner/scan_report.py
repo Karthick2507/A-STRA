@@ -19,7 +19,7 @@ def format_report(result: ScanResult) -> str:
     lines.append(f"  {'Role':<14} {'Conf':<8} {'Files':<6}  Examples")
     lines.append(f"  {'-'*14} {'-'*8} {'-'*6}  {'-'*40}")
 
-    for role in ["ui_page", "ui_action", "ui_locator", "controller", "api_test", "data_verify"]:
+    for role in ["ui_page", "ui_action", "ui_locator", "controller", "api_test", "data_verify", "action_class"]:
         a = result.assignments.get(role)
         if not a:
             lines.append(f"  {role:<14} {'—':<8} {'0':<6}  (not detected)")
