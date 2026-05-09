@@ -83,6 +83,27 @@ def _ask_yes_no(prompt: str, default: str = "y") -> bool:
     return ans in ("y", "yes")
 
 
+def _pick_role_for_file(type_label: str, suggested: str) -> str:
+    """Show the full role menu and return the user's chosen role."""
+    print()
+    print(f"  Select Role for the file type '{type_label}'")
+    print(f"  (Single selection or Enter to accept recommended)")
+    print()
+    for i, role in enumerate(_VALID_ROLES, 1):
+        marker = "  ← recommended" if role == suggested else ""
+        desc = _ROLE_DESCRIPTIONS.get(role, "")
+        print(f"    {i}. {role:<16} {desc}{marker}")
+    print()
+    default_idx = str(_VALID_ROLES.index(suggested) + 1) if suggested in _VALID_ROLES else "1"
+    while True:
+        raw = _ask(f"  Your Role selection (or Enter to skip)", default_idx).strip()
+        if not raw:
+            return suggested
+        if raw.isdigit() and 1 <= int(raw) <= len(_VALID_ROLES):
+            return _VALID_ROLES[int(raw) - 1]
+        print(f"  Invalid. Enter a number between 1 and {len(_VALID_ROLES)}.")
+
+
 def _pick_files(
     all_files: List[Path],
     role: str,
@@ -90,14 +111,14 @@ def _pick_files(
 ) -> List[Path]:
     """Show numbered file list; return the subset chosen by the user."""
     print()
-    print(f"  Select files for  '{type_label}'  →  role: {role}")
+    print(f"  Select files for '{type_label}'  →  role: {role}")
     print(f"  (comma-separated numbers, e.g.  1,3   or just  2)")
     print()
     for i, f in enumerate(all_files, 1):
         print(f"    {i:3}. {f.name}")
     print()
     while True:
-        raw = _ask("  Your selection (or Enter to skip)").strip()
+        raw = _ask("  Your File selection (or Enter to skip)").strip()
         if not raw:
             return []
         parts = re.split(r"[,\s]+", raw)
@@ -178,29 +199,36 @@ def review_scan(result: ScanResult, *, non_interactive: bool = False) -> ScanRes
 
     for i, label in enumerate(hierarchy, 1):
         print()
+        print(f"  ── [{i}/{len(hierarchy)}] File type: {label} ──")
         suggested_role = _suggest_role(label)
-        print(f"  ── [{i}/{len(hierarchy)}] File type: {label}  →  role: {suggested_role} ──")
 
-        chosen_paths = _pick_files(all_files, suggested_role, label)
+        # Step 2a: role selection
+        chosen_role = _pick_role_for_file(label, suggested_role)
+        print(f"  ✓  '{label}'  →  {chosen_role}")
+
+        # Step 2b: file selection
+        print()
+        print(f"  ── [{i}/{len(hierarchy)}] File type: {label}  →  role: {chosen_role} ──")
+        chosen_paths = _pick_files(all_files, chosen_role, label)
         if not chosen_paths:
             print(f"  Skipped — no files assigned for '{label}'.")
             continue
 
-        if suggested_role not in new_assignments:
-            new_assignments[suggested_role] = RoleAssignment(role=suggested_role)
+        if chosen_role not in new_assignments:
+            new_assignments[chosen_role] = RoleAssignment(role=chosen_role)
 
         for path in chosen_paths:
             file_lang = _EXT_LANG.get(path.suffix.lower(), "python")
-            new_assignments[suggested_role].files.append(
+            new_assignments[chosen_role].files.append(
                 ScannedFile(
                     path=path,
                     language=file_lang,
-                    role=suggested_role,
+                    role=chosen_role,
                     confidence=0.95,
                     signals=[f"user-selected for '{label}'"],
                 )
             )
-        print(f"  ✓ {len(chosen_paths)} file(s) → {suggested_role}")
+        print(f"  ✓ {len(chosen_paths)} file(s) \"{', '.join(p.name for p in chosen_paths)}\" → {chosen_role}")
 
     # ── Rebuild result ─────────────────────────────────────────────────────
     all_langs = sorted({
